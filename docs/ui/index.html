@@ -312,7 +312,7 @@ font-size:13px;padding:10px 16px;border-radius:12px;opacity:0;transition:.2s;z-i
 <script>
 
 const BODY = {"demo-01": "", "demo-02": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-03": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-04": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-05": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-06": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-07": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-08": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-09": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-10": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-11": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-12": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-13": "", "demo-14": "", "demo-15": "", "demo-16": "", "demo-17": "", "demo-18": ""};   // 每个会话自己的脚本；不在表里 = 还没写
-const D = {"rows": [{"id": "demo-01", "n": "小满", "d": 762, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-02", "n": "阿哲", "d": 676, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-03", "n": "木木", "d": 593, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-04", "n": "老王", "d": 569, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-05", "n": "七月", "d": 476, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-06", "n": "咸鱼", "d": 441, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-07", "n": "大白", "d": 417, "s": true, "g": false, "st": "重燃中", "fl": "", "ex": "", "av": "", "x": 3, "rn": true, "hs": true}, {"id": "demo-08", "n": "阿离", "d": 407, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-09", "n": "汤圆", "d": 168, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-10", "n": "橙子", "d": 154, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-11", "n": "阿柚", "d": 154, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-12", "n": "十三", "d": 60, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-13", "n": "老K", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-14", "n": "麦麦", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-15", "n": "豆豆", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-16", "n": "阿蓝", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-17", "n": "小鹿", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-18", "n": "咕咕", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-19", "n": "阿元", "d": 35, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-20", "n": "米粒", "d": 28, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-21", "n": "小星", "d": 19, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-22", "n": "阿May", "d": 7, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}], "tpl": [{"n": "续火花表情", "b": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "m": 18, "v": [{"n": "问候语", "e": "\"宝\""}, {"n": "天数", "e": "ctx.io.days"}]}], "today": "2026-11-27", "enabled": true, "ah": 0, "am": 0};
+const D = {"rows": [{"id": "demo-01", "n": "小满", "d": 762, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-02", "n": "阿哲", "d": 676, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-03", "n": "木木", "d": 593, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-04", "n": "老王", "d": 569, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-05", "n": "七月", "d": 476, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-06", "n": "咸鱼", "d": 441, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-07", "n": "大白", "d": 417, "s": true, "g": false, "st": "重燃中", "fl": "重燃中 1/3", "ex": "", "av": "", "x": 3, "rn": true, "hs": true}, {"id": "demo-08", "n": "阿离", "d": 407, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-09", "n": "汤圆", "d": 168, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-10", "n": "橙子", "d": 154, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-11", "n": "阿柚", "d": 154, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-12", "n": "十三", "d": 60, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-13", "n": "老K", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-14", "n": "麦麦", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-15", "n": "豆豆", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-16", "n": "阿蓝", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-17", "n": "小鹿", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-18", "n": "咕咕", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-19", "n": "阿元", "d": 35, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-20", "n": "米粒", "d": 28, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-21", "n": "小星", "d": 19, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-22", "n": "阿May", "d": 7, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}], "tpl": [{"n": "续火花表情", "b": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "m": 18, "v": [{"n": "问候语", "e": "\"宝\""}, {"n": "天数", "e": "ctx.io.days"}]}], "today": "2026-11-27", "enabled": true, "ah": 0, "am": 0};
 const IC = {menu:'\ueb94',gear:'\ueb51',fire:'\ueaf2',tpl:'\ueaf0',vars:'\uebb8',server:'\ueba2',
 book:'\ueaa4',chev:'\ueab6',check:'\ueab2',close:'\uea76',search:'\uea6d',clear:'\ueabf',wand:'\uebcf',
 copy:'\uebcc',link:'\ueb15',select:'\ueb85',refresh:'\ueb37',shield:'\uebe0',info:'\uea74',graph:'\ueb03',
@@ -439,10 +439,14 @@ function home(){
 const FIRE_MINI = '<svg class="mf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
 // 副标题只放状态：没文案就是「无文案 · 不会发送」，否则是火花异常/到期
 function subOf(r){
-  const flame = r.fl && r.fl !== String(r.d) ? r.fl : '';
+  // 副标题只说补充信息：状态由徽章表达，不重复状态词，也不显示「需 N 天」
   const hasBody = !!((BODY[r.id] || '')).trim();
-  return hasBody ? [flame, r.ex].filter(Boolean).join(' · ')
-    : '';
+  if (!hasBody) return '';
+  const parts = [];
+  const frac = r.x === 3 ? /(\d+)\s*\/\s*(\d+)/.exec(r.fl || '') : null;
+  if (frac) parts.push('进度 ' + frac[1] + '/' + frac[2]);
+  if (r.ex) parts.push('火花' + r.ex);
+  return parts.join(' · ');
 }
 function row(r, o){
   o = o || {};
@@ -618,9 +622,7 @@ function settings(){
   let h = '<div class="sublabel">发送</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
     trow('自动续火花','', S.enabled, "S.enabled=!S.enabled;render()") +
     trow('只在设定时间检查','其余时间不动', S.checkAtAlarm, "S.checkAtAlarm=!S.checkAtAlarm;render()") +
-    irow('copy','每个会话最多分几段','脚本里 ctx.commit() 几条就发几条','3 段', null) +
-    '</div>' +
-    '<div class="hint" style="margin:2px 4px 0">分段只在同一轮里生效，超过 3 段的部分会并进最后一段。</div>';
+    '</div>';
 
   h += '<div class="sublabel">定时唤醒</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
     irow('refresh','每天唤醒抖音','发完就关，需要 root', hhmm(S.alarm[0],S.alarm[1]), "pickTime()");
@@ -644,7 +646,7 @@ function settings(){
     '</div>';
 
   h += '<div class="sublabel">关于</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
-    irow('info','版本','v3.4.2（34200）','',"toast('v3.4.2（34200）')") +
+    irow('info','版本','v3.4.4（34400）','',"toast('v3.4.4（34400）')") +
     irow('info','许可与来源','Apache-2.0','',"openText('许可与来源','Apache License 2.0\\n部分交互表情名与协议来自 yfishyon/doumcp（Apache-2.0）。')") +
     irow('link','源码','github.com/tiantong007/…douyinspark','',"toast('浏览器里打开仓库')") +
     '</div>';
@@ -696,7 +698,7 @@ function renderDrawer(){
   const items = [['home','fire','状态看板',PENDING().length],['templates','tpl','模板',S.tpls.length],
 ['settings','gear','设置',0]];
   $('drawer').innerHTML =
-    '<div class="head"><b>抖音续火花cc</b><span>v3.4.2（34200）· 装于 11-27 22:14</span></div>' +
+    '<div class="head"><b>抖音续火花cc</b><span>v3.4.4（34400）· 装于 11-27 22:14</span></div>' +
     '<div class="dnav">' + items.map(it =>
       '<a class="' + (S.page === it[0] ? 'on' : '') + '" onclick="go(\'' + it[0] + '\')">' +
       '<span class="ic">' + IC[it[1]] + '</span>' + it[2] +
@@ -1230,7 +1232,7 @@ function docsPage(){
     '<h3>4　脚本怎么写</h3>' +
     '<p>脚本是一段 JS，能用的就三件事：往结果里放东西、分段、发表情。</p>' +
     '<pre>// 一条文字\nctx.result.push("晚上好 🔥");\n\n// 分成两条发\nctx.result.push("第一条");\nctx.commit();\nctx.result.push("第二条");\n\n// 发一个互动表情（自成一条）\nctx.result.push({ type: "emoji", name: "续火花" });</pre>' +
-    '<p>一次最多 3 段，超出的会并进最后一段。脚本没产出内容就当作「跳过」，不会发空消息。</p>' +
+    '<p>脚本写几段就发几段，没有条数上限；不过一次发太多条容易被抖音判定骚扰，建议 1～3 条。脚本没产出内容就当作「跳过」，不会发空消息。</p>' +
 
     '<h3>5　变量</h3>' +
     '<p>变量在发送那一刻取值，写法是带命名空间的完整路径：</p>' +

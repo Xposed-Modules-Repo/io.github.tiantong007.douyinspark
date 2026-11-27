@@ -198,7 +198,18 @@ fun Context.switchChip(on: Boolean, onToggle: (Boolean) -> Unit): View =
             topMargin = dp(3)
         })
         knob.translationX = if (on) dpF(18f) else 0f
-        setOnClickListener { onToggle(!on) }
+        // 自己翻：设置页那种「只写配置不重建」的开关也要立刻看到变化，
+        // 否则用户点了以为没生效（重建页面又会让滚动位置跳走）。
+        var checked = on
+        fun paint(value: Boolean) {
+            (background as? GradientDrawable)?.setColor(if (value) Tokens.ACCENT else Tokens.SWITCH_OFF)
+            knob.animate().translationX(if (value) dpF(18f) else 0f).setDuration(120L).start()
+        }
+        setOnClickListener {
+            checked = !checked
+            paint(checked)
+            onToggle(checked)
+        }
     }
 
 /** 只设一个角的圆角（聊天气泡）。 */

@@ -117,8 +117,6 @@ object SparkScriptEngine {
         val info: String = "{}",
         /** 表情目录：`[{name,static,animate}]`（`ctx.emoji.list()` 用）。 */
         val emojis: String = "[]",
-        /** 每个会话最多 commit 几段（含表情段）；超出后并入最后一段文本。 */
-        val maxCommits: Int = 3,
         /** 表情 push 行为：`split` / `emojiOnly` / `appendLast` / `prependFirst`。 */
         val emojiPushMode: String = "split",
         /**
@@ -296,7 +294,6 @@ object SparkScriptEngine {
             ScriptableObject.putProperty(state, "namesJson", env.macroNames)
             ScriptableObject.putProperty(state, "infoJson", env.info)
             ScriptableObject.putProperty(state, "emojisJson", env.emojis)
-            ScriptableObject.putProperty(state, "maxCommits", env.maxCommits)
             ScriptableObject.putProperty(state, "emojiPushMode", env.emojiPushMode)
             ScriptableObject.putProperty(state, "preview", env.preview)
             ScriptableObject.putProperty(state, "convJson", env.conversations)
@@ -656,7 +653,7 @@ object SparkScriptEngine {
         }
 
         // ---- 分段发送：ctx.commit / submit / exit / segment，表情对象 push ----
-        var __sparkSegs = [], __sparkFront = [], __sparkLast = [], __sparkCommits = 0;
+        var __sparkSegs = [], __sparkFront = [], __sparkLast = [];
         var __sparkExited = false;
 
         // ctx.result.push 换成会认表情对象的版本：push({type:"emoji", name:"续火花"})
@@ -680,14 +677,9 @@ object SparkScriptEngine {
           __sb.result0 = ctx.result;
         }
 
-        // 追加文本段；超过 maxCommits 就并进最后一段（避免一段一消息刷屏）
+        // 追加文本段：脚本 commit 几段就发几段（不再有段数上限）
         function __sparkAddText(text){
           if (!text) return null;
-          var max = Number(__sb.maxCommits || 3);
-          if (__sparkCommits >= max && __sparkSegs.length){
-            var lastSeg = __sparkSegs[__sparkSegs.length - 1];
-            if (lastSeg.kind === "text"){ lastSeg.text += "\n" + text; return lastSeg; }
-          }
           var seg = { kind: "text", text: text };
           __sparkSegs.push(seg);
           return seg;
@@ -712,7 +704,6 @@ object SparkScriptEngine {
         // ctx.commit()：把当前 ctx.result 收成一段，返回 {handle, index}
         ctx.commit = function(){
           var seg = __sparkCommitText();
-          __sparkCommits++;
           // handle 与最终编号一致（__sparkFinalize 按位置重编 seg-1..N）；没有内容可收时给空串
           return { handle: seg ? ("seg-" + __sparkSegs.length) : "", index: __sparkSegs.length };
         };

@@ -86,20 +86,8 @@ class SettingsScreen(private val shell: Shell) : PageView {
                         shell.state.update { it.copy(checkAtAlarmOnly = on) }
                     },
                 )
-                addView(ctx.divider())
-                addView(
-                    ctx.settingRow(
-                        Tokens.Icon.SELECT,
-                        "每个会话最多分几段",
-                        "多段发送的上限，超出会并进最后一段",
-                        "3 段",
-                        color = Tokens.INK,
-                        glyphColor = Tokens.INK_DIM,
-                    ),
-                )
             },
         )
-        root.addView(ctx.formHint("分段上限下一版改成可调。现在是 3 段。"))
 
         root.addView(ctx.sectionLabel("定时唤醒"))
         root.addView(

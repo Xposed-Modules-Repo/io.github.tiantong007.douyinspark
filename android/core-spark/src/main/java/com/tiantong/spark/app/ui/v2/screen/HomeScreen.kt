@@ -420,7 +420,8 @@ class HomeScreen(private val shell: Shell) : PageView {
             who.addView(subRow, ctx.lp(MATCH, WRAP, top = 4))
             addView(who, ctx.lp(0, WRAP, 1f))
 
-            // 名单档位也要能勾：全选/发送作用的是当前列表，看不见勾选就无从取消。
+            // 名单档位也要能勾：全选/发送作用的是当前列表；行尾顺序与网页一致：规则按钮在内，勾选开关永远是最外侧最后一个。
+            if (member) addView(rules(snapshot), ctx.lp(WRAP, WRAP, right = 8))
             addView(
                 ctx.switchChip(state.isPicked(id)) { on ->
                     if (state.isPicked(id) != on) state.togglePick(id)
@@ -428,7 +429,6 @@ class HomeScreen(private val shell: Shell) : PageView {
                 },
                 ctx.lp(44, 26),
             )
-            if (member) addView(rules(snapshot), ctx.lp(WRAP, WRAP, left = 6))
         }
     }
 
@@ -515,13 +515,25 @@ class HomeScreen(private val shell: Shell) : PageView {
         }
 
     /** 第二行说明：只放状态类信息（火花异常 / 到期 / 需几天），天数不在这里重复。 */
+    /**
+     * 副标题只说"补充信息"，状态已经由 [statusTag] 表达，这里绝不重复状态词。
+     *
+     * - 重燃中：只有宿主给了带进度的原生文案（含 `/`，如「重燃中 2/3」）才显示。
+     *   `recoverDays` / `recoverNeedDays` 是时间轴上的预测值，实测方向会反过来
+     *   （例：李金鹏 rd=3/rn=1，一一大王 rd=1/rn=3），拿去拼进度会和宿主界面矛盾，所以不用。
+     * - 到期提示：宿主给的「6 天后消失」这类未来段文案，前面补主语「火花」。
+     * - `stateText` 在 state=1/2 时是**天数数字**、state=3 时是**状态词**，语义不稳定，一律不当文案用。
+     */
     private fun subtitle(snapshot: ConversationSnapshot): String {
         if (!shell.state.hasScript(snapshot.conversationId)) return ""
         val parts = mutableListOf<String>()
-        val flame = snapshot.stateText.ifBlank { snapshot.flameText }
-        if (flame.isNotBlank() && flame != snapshot.days.toString()) parts += flame
-        if (snapshot.expireText.isNotBlank()) parts += snapshot.expireText
-        if (parts.isEmpty() && snapshot.recoverNeedDays > 0) parts += "需 ${snapshot.recoverNeedDays} 天"
+        if (snapshot.state == 3) {
+            // 宿主原生文案是「重燃中 2/3」，状态词徽章已经有了，这里只取分数，别再抄一遍"重燃中"
+            val hit = Regex("""(\d+)\s*/\s*(\d+)""").find(snapshot.flameText)
+            val fraction = if (hit == null) null else hit.groupValues[1] + "/" + hit.groupValues[2]
+            if (fraction != null) parts += "进度 $fraction"
+        }
+        if (snapshot.expireText.isNotBlank()) parts += "火花${snapshot.expireText}"
         return parts.joinToString(" · ")
     }
 
