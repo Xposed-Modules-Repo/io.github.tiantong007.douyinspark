@@ -185,13 +185,27 @@ class SparkActivity : Activity(), Shell {
         return root
     }
 
-    /** 状态栏/导航条真实高度：edge-to-edge 下由 insets 决定，低版本退回资源值。 */
     /**
-     * 状态栏跟着页面底色走（深色图标），内容不延伸到系统栏下面。
-     * 试过 edge-to-edge，MIUI 上 insets 分发不稳定，会出现顶部一条错位的空带。
+     * 状态栏/导航条颜色跟页面底色走（深色图标）。
+     *
+     * 必须真正进入 edge-to-edge：targetSdk 35+（Android 15 起）系统强制
+     * `decorFitsSystemWindows=false`，内容会延伸到系统栏下面，不自己吃掉
+     * insets 就会出现「状态栏压住标题」的遮挡（见 issue #1）。
+     * 这里统一关掉 decor 的自动让位， insets 一律由 [applyInsets] 手动应用，
+     * 避免「decor 让了一次 + 我们再让一次」的双倍空带。
      */
     private fun enterEdgeToEdge() {
         runCatching {
+            if (Build.VERSION.SDK_INT >= 30) {
+                window.setDecorFitsSystemWindows(false)
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility =
+                    window.decorView.systemUiVisibility or
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            }
             @Suppress("DEPRECATION")
             window.statusBarColor = Tokens.BG
             @Suppress("DEPRECATION")
@@ -214,14 +228,34 @@ class SparkActivity : Activity(), Shell {
         }
     }
 
-    /** 系统栏已由 decor 让开，这里只兜底保证图标颜色正确。 */
+    /**
+     * 手动应用系统栏 insets：内容不再被状态栏/导航条/刘海压住。
+     *
+     * 返回未消费的 insets 让子 view 继续收到（它们都没有自己的监听，无副作用）。
+     * padding 加在 root 上，抽屉/scrim/FAB 全部相对让位后的区域定位，
+     * FAB 的 bottomMargin 因此天然落在导航条之上。
+     */
     private fun applyInsets(root: View) {
-        root.setOnApplyWindowInsetsListener { _, insets -> insets }
-    }
-
-    private fun statusBarHeight(): Int {
-        val id = resources.getIdentifier("status_bar_height", "dimen", "android")
-        return if (id > 0) resources.getDimensionPixelSize(id) else dp(24)
+        root.setOnApplyWindowInsetsListener { v, insets ->
+            runCatching {
+                if (Build.VERSION.SDK_INT >= 30) {
+                    val bars =
+                        insets.getInsets(
+                            android.view.WindowInsets.Type.systemBars() or
+                                android.view.WindowInsets.Type.displayCutout(),
+                        )
+                    v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                } else {
+                    v.setPadding(
+                        insets.getSystemWindowInsetLeft(),
+                        insets.getSystemWindowInsetTop(),
+                        insets.getSystemWindowInsetRight(),
+                        insets.getSystemWindowInsetBottom(),
+                    )
+                }
+            }
+            insets
+        }
     }
 
     private fun primaryFab(): View =

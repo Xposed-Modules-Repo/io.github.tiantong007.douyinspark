@@ -2,8 +2,8 @@
 
 抖音「自动续火花」LSPosed 模块。给抖音判定今天还没互动的会话，自动发一条你自己写的私信，每会话每天最多一条。
 
-<!-- version-anchor: v3.1.2 (31002) -->
-**v3.1.2**（versionCode 31002）· Android 9+ / Root / LSPosed 2.x · arm64-v8a
+<!-- version-anchor: v3.1.3 (31003) -->
+**v3.1.3**（versionCode 31003）· Android 9+ / Root / LSPosed 2.x · arm64-v8a
 
 ## 界面预览
 

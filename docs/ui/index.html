@@ -519,7 +519,7 @@ function settings(){
     '</div>';
 
   h += '<div class="sublabel">关于</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
-    irow('info','版本','v3.1.2（31002）','',"toast('v3.1.2（31002）')") +
+    irow('info','版本','v3.1.3（31003）','',"toast('v3.1.3（31003）')") +
     irow('link','源码','github.com/tiantong007/…douyinspark','',"toast('浏览器里打开仓库')") +
     '</div>';
   return h;
@@ -559,7 +559,7 @@ function renderDrawer(){
   const items = [['home','fire','抖音续火花cc',PENDING().length],['templates','tpl','模板',S.tpls.length],
     ['vars','vars','变量',0],['settings','gear','设置',0]];
   $('drawer').innerHTML =
-    '<div class="head"><b>抖音续火花cc</b><span>v3.1.2（31002）· 已经自动续火花 ' + ACTIVE_DAYS + ' 天了</span></div>' +
+    '<div class="head"><b>抖音续火花cc</b><span>v3.1.3（31003）· 已经自动续火花 ' + ACTIVE_DAYS + ' 天了</span></div>' +
     '<div class="dnav">' + items.map(it =>
       '<a class="' + (S.page === it[0] ? 'on' : '') + '" onclick="go(\'' + it[0] + '\')">' +
       '<span class="ic">' + IC[it[1]] + '</span>' + it[2] +
