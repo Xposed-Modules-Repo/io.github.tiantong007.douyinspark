@@ -1,0 +1,13 @@
+*.iml
+.DS_Store
+.gradle
+.kotlin
+/.idea
+/captures
+/local.properties
+build
+
+# 发布签名密钥与配置，不入库
+*.jks
+*.keystore
+release-signing.properties

@@ -1,0 +1,356 @@
+package com.tiantong.spark.app.config
+
+import com.tiantong.spark.app.config.model.ConversationSnapshot
+import com.tiantong.spark.app.config.model.ConversationTemplate
+import com.tiantong.spark.app.config.model.MacroScript
+import com.tiantong.spark.app.config.model.SandboxVar
+import com.tiantong.spark.app.config.model.TemplateGroup
+import com.tiantong.spark.app.config.model.TemplateSource
+import com.tiantong.spark.app.config.model.TemplateVar
+import com.tiantong.spark.app.config.model.UserFunction
+
+data class SparkConfig(
+    val enabled: Boolean = false,
+    val groups: List<TemplateGroup> = emptyList(),
+    val conversations: List<ConversationTemplate> = emptyList(),
+    val sentDays: Map<String, String> = emptyMap(),
+    val snapshots: List<ConversationSnapshot> = emptyList(),
+    /** 手动移入「需要续火花」的会话（覆盖抖音侧判定）。 */
+    val forcedRenew: Set<String> = emptySet(),
+    /** 手动移入「无需续火花」的会话（覆盖抖音侧判定）。 */
+    val forcedSkip: Set<String> = emptySet(),
+    /** 宏：可挂到多个模板 / 会话上的独立小脚本，在模板脚本之后执行。 */
+    val macros: List<MacroScript> = emptyList(),
+    /** 自定义函数：执行前注入成 `ctx.functions.<名字>`。 */
+    val functions: List<UserFunction> = emptyList(),
+    /** 沙盒变量：脚本 `ctx.sandbox.setvar` 写下的 JSON 数据，按创建者归属。 */
+    val sandbox: List<SandboxVar> = emptyList(),
+    /**
+     * 宿主（抖音进程）最近一次运行的简报：快照刷新是否成功、失败原因、续火花结果。
+     * 本机 LSPosed 日志不可用，这是唯一能让管理界面看到宿主侧状态的通道。
+     */
+    val hostNote: String = "",
+    val hostNoteAt: Long = 0L,
+    /** 宿主（抖音进程）最近一次响应指令的时间戳：界面用它判断抖音是否在运行。 */
+    val hostAliveAt: Long = 0L,
+    /** 新手引导卡片是否已收起（只影响提示，不影响功能）。 */
+    val guideDismissed: Boolean = false,
+    /** 引导用：是否用过搜索。 */
+    val guideSearched: Boolean = false,
+    /** 引导用：是否用过文档的复制 / 导出 / 分享。 */
+    val guideShared: Boolean = false,
+    /**
+     * 定时唤醒：每天到这个钟点自动打开抖音（0~23，-1 = 关闭）。
+     *
+     * 模块本身跑在抖音进程里，抖音不启动就没有任何代码在跑，所以「锁屏也能发」必须靠
+     * AlarmManager 把抖音拉起来。见 [com.tiantong.spark.app.alarm.DailyAlarm]。
+     */
+    val alarmHour: Int = -1,
+    /** 定时唤醒的分（0~59）。 */
+    val alarmMinute: Int = 0,
+    /** 定时唤醒是否已经拿到「后台弹出界面 / 精确闹钟」等权限（只用于界面提示，不拦功能）。 */
+    val alarmAsked: Boolean = false,
+    /**
+     * 只在设定时间检查：开着的话，打开抖音不再顺带跑一轮自动续火花，
+     * 只有落在 [alarmHour] 附近的窗口里才检查。
+     *
+     * 关掉（false）就是老行为 —— 每次冷启动 / 每次回前台都检查一遍。
+     * 没设闹钟时间时该开关不生效（否则会永远不检查）。
+     */
+    val checkAtAlarmOnly: Boolean = true,
+) {
+    fun group(id: String?): TemplateGroup? = groups.firstOrNull { it.id == id }
+
+    fun conversation(id: String): ConversationTemplate? = conversations.firstOrNull { it.conversationId == id }
+
+    /** 按会话 id 取快照（昵称/头像/火花天数等宿主抓来的信息）。 */
+    fun snapshot(id: String): ConversationSnapshot? = snapshots.firstOrNull { it.conversationId == id }
+
+    /** 继承来源的展示名；[inheritFrom] 为 null 表示这个会话还没写文案。 */
+    fun inheritLabel(inheritFrom: String?): String =
+        when {
+            inheritFrom == null -> "未写文案"
+            inheritFrom == BUILTIN_BLANK -> "空白模板"
+            else -> templateName(inheritFrom) ?: "已删除的模板"
+        }
+
+    /** 会话的继承来源键：null = 未写文案，[BUILTIN_BLANK] = 空白，其余为模板 id。 */
+    fun inheritKey(conversationId: String): String? = conversation(conversationId)?.inheritFrom
+
+    /** 是否列入「需要续火花」：抖音侧「今天还没互动」（火苗灰 / 待重燃），可被手动移动覆盖。 */
+    fun needsRenewal(snapshot: ConversationSnapshot): Boolean =
+        when (snapshot.conversationId) {
+            in forcedRenew -> true
+            in forcedSkip -> false
+            else -> snapshot.hasSpark && snapshot.needsRenewal
+        }
+
+    /**
+     * 合并一次会话扫描结果，而不是整份替换。
+     *
+     * 抖音冷启动后 IM 是**分批**吐会话的（先 0 条，再几条、几十条），一次扫描代表不了完整列表；
+     * 直接替换会把还没加载出来的会话从界面里抹掉。所以扫到的用新数据、
+     * 没扫到的先原样留着并累加 [ConversationSnapshot.missCount]：
+     * 连续 [HIDDEN_AFTER_MISSES] 次没出现就从列表里隐藏，
+     * 连续 [SNAPSHOT_GRACE_MS] 没出现（按最后一次出现算）才整条删除。
+     */
+    fun mergeSnapshots(
+        fresh: List<ConversationSnapshot>,
+        now: Long,
+    ): SparkConfig {
+        val previous = snapshots.associateBy { it.conversationId }
+        val merged =
+            fresh.map { item ->
+                val old = previous[item.conversationId] ?: return@map item
+                // 昵称/备注/头像是按对方 uid 现查的，冷启动时可能还没查到；空值不覆盖已有内容
+                item.copy(
+                    name = item.name.ifBlank { old.name },
+                    remark = item.remark.ifBlank { old.remark },
+                    avatar = item.avatar.ifBlank { old.avatar },
+                    peerUid = item.peerUid.ifBlank { old.peerUid },
+                )
+            }
+        val seen = fresh.map { it.conversationId }.toSet()
+        val kept = mutableListOf<ConversationSnapshot>()
+        val expired = mutableSetOf<String>()
+        snapshots.forEach { old ->
+            if (old.conversationId in seen) return@forEach
+            if (now - old.updatedAt > SNAPSHOT_GRACE_MS) {
+                expired += old.conversationId
+            } else {
+                kept += old.copy(missCount = old.missCount + 1)
+            }
+        }
+        // 快照删除后，手动归属里指向它的 id 一起清掉（否则「已选目标」会永远多一个幽灵）
+        return copy(
+            snapshots = merged + kept,
+            forcedRenew = forcedRenew - expired,
+            forcedSkip = forcedSkip - expired,
+        )
+    }
+
+    /**
+     * 解析某个会话最终生效的模板变量：**父模板的变量在前、会话自己的在后**，同名覆盖。
+     *
+     * 自己的变量排在后面有两个好处：求值时能引用父模板已经算出来的变量，
+     * 同名时又能覆盖父模板的值（「就近优先」）。**表达式为空的会话变量等于没填** ——
+     * 会用父模板的同名变量；父模板也没有就留一条空表达式，求值结果为 `null`
+     * （见 `TemplateVarPrelude`）。
+     */
+    fun templateVarsFor(conversationId: String): List<TemplateVar> {
+        val own = conversation(conversationId)
+        return mergeVars(varsAlong(own?.inheritFrom), own?.variables.orEmpty())
+    }
+
+    /** 解析某个一级模板的变量（含父模板），供模板编辑页预览用。 */
+    fun templateVarsForGroup(groupId: String): List<TemplateVar> = varsAlong(groupId)
+
+    private fun varsAlong(startId: String?): List<TemplateVar> {
+        val merged = LinkedHashMap<String, TemplateVar>()
+        var cursor = startId
+        var guard = 0
+        while (cursor != null && guard++ < 32) {
+            val current = group(cursor) ?: break
+            current.variables.forEach { variable ->
+                if (variable.name.isNotBlank() && variable.name !in merged) merged[variable.name] = variable
+            }
+            cursor = conversation(cursor)?.inheritFrom
+        }
+        return merged.values.toList()
+    }
+
+    /** 挂在指定模板下的会话（内置模板的 id 同样适用）。 */
+    fun membersOf(templateId: String): List<ConversationTemplate> = conversations.filter { it.inheritFrom == templateId }
+
+    /** 模板 id 的显示名：内置模板 / 自定义模板 / 某个会话的派生模板（未知返回 null）。 */
+    fun templateName(id: String?): String? =
+        when {
+            id == null -> null
+            id.startsWith(BUILTIN_PREFIX) -> BuiltinTemplates.byId(id.removePrefix(BUILTIN_PREFIX))?.name
+            group(id) != null -> group(id)?.name
+            conversation(id) != null -> conversationLabel(id) + " 的模板"
+            else -> null
+        }
+
+    /** 模板 id 的内容：内置模板 / 自定义模板 / 某个会话的派生模板。 */
+    fun templateBody(id: String?): String =
+        when {
+            id == null -> ""
+            id.startsWith(BUILTIN_PREFIX) -> BuiltinTemplates.byId(id.removePrefix(BUILTIN_PREFIX))?.body.orEmpty()
+            group(id) != null -> group(id)?.body.orEmpty()
+            else -> conversation(id)?.body.orEmpty()
+        }
+
+    fun conversationLabel(conversationId: String): String =
+        snapshots.firstOrNull { it.conversationId == conversationId }?.displayName?.takeIf { it.isNotBlank() }
+            ?: conversationId
+
+    /**
+     * 可作为继承来源的清单：内置模板（**含空白模板** = 不用模板、自己写）+ 自定义模板 + 其它会话的派生模板。
+     *
+     * 「派生自某个派生模板」的语义（用户确认）：**挂到它的父模板上，但内容复制它的当前内容**。
+     * 例：`A → B`，C 派生自 B ⇒ C 挂在 A 上（以后跟 A 同步），C 的内容 = B 的内容。
+     * 若来源本身跟随的是空白模板（没有父内容），则 C 也跟随空白模板。另有一条**克隆**：同样复制内容，之后跟随空白模板。
+     */
+    fun sources(excludeConversationId: String? = null): List<TemplateSource> =
+        BuiltinTemplates.ALL
+            .map { TemplateSource(BUILTIN_PREFIX + it.id, "内置：" + it.name, it.body) } +
+            groups.map { TemplateSource(it.id, "模板：" + it.name.ifBlank { "(未命名)" }, it.body) } +
+            conversations
+                .filter { it.conversationId != excludeConversationId && it.body.isNotBlank() }
+                .flatMap { child ->
+                    val label = conversationLabel(child.conversationId)
+                    val parent = child.inheritFrom
+                    val parentLabel = templateName(parent)?.let { "挂在 $it、复制它的内容" } ?: "空白模板"
+                    listOf(
+                        TemplateSource(parent, "派生：$label（$parentLabel）", child.body),
+                        TemplateSource(null, "克隆：$label（复制内容，之后跟空白模板）", child.body),
+                    )
+                }
+
+    /**
+     * 某个模板（通用模板 id）或某个会话（会话 id）要跑的宏，按配置顺序。
+     *
+     * 只看 [MacroScript.appliesTo]：挂在模板上的宏会跟着派生会话一起跑，而
+     * 「仅模板」（[MacroScript.templateOnly]）只在模板自己的试算 / 预览里出现。
+     */
+    fun macrosFor(targetIds: Collection<String>): List<MacroScript> =
+        macros.filter { macro -> macro.appliesTo.any { it in targetIds } }
+
+    /** 模板自己的试算 / 预览：传播挂载 + 「仅模板」挂载都算。 */
+    fun macrosForTemplate(templateId: String): List<MacroScript> =
+        macros.filter { macro -> templateId in macro.appliesTo || templateId in macro.templateOnly }
+
+    /**
+     * 组装程序：函数注入 + [body] + [macros]（预览与发送共用同一份逻辑）。
+     *
+     * 每个宏之前插一句**结果归一化**：结果变量按列表设计（模板里用 `.push()`），
+     * 万一某个模板写成 `$spark_result$ = "…"`，宏执行前会被自动包成单元素列表，
+     * 于是宏里可以放心 `.push()`，不需要自己判断类型。
+     */
+    fun composeProgram(
+        body: String,
+        macros: List<MacroScript> = emptyList(),
+    ): String =
+        buildString {
+            val prelude = functionsPrelude()
+            if (prelude.isNotEmpty()) append(prelude).append('\n')
+            append(body)
+            macros.filter { it.body.isNotBlank() }.forEach { macro ->
+                append('\n').append(RESULT_NORMALIZE).append('\n')
+                // 沙盒归属切到这个宏自己（模板段拿不到 ctx.sandbox）
+                append(SANDBOX_OWNER_CALL).append(MACRO_OWNER_PREFIX).append(macro.id).append("\");\n")
+                append("// 宏：").append(macro.name).append('\n').append(macro.body)
+            }
+        }
+
+    /** 沙盒归属切换：脚本里由引擎提供的内部函数。 */
+    private val SANDBOX_OWNER_CALL: String = "__sandboxOwner(\""
+
+    /** 沙盒里宏归属的前缀。 */
+    private val MACRO_OWNER_PREFIX: String = "macro:"
+
+    /** 自定义函数注入：函数声明本体 + 挂到 `ctx.functions.<名字>`。 */
+    fun functionsPrelude(): String =
+        functions
+            .filter { it.name.isNotBlank() && it.body.isNotBlank() }
+            .joinToString("\n") { fn ->
+                val declaration = fn.declaration()
+                "$declaration\nctx.functions.${fn.name} = ${fn.name};"
+            }
+
+    /** 当前在「已选目标」里的会话（单聊、按判定或手动归属；已隐藏的不算）。 */
+    fun selectedIds(): Set<String> =
+        snapshots.filter { !it.isHidden && needsRenewal(it) }.map { it.conversationId }.toSet()
+
+    /**
+     * 数据保留策略（用户确认过的口径）：
+     * - 在「已选目标」里：给它的会话模板打上「最后一次在已选目标的时间」；
+     * - 不在「已选目标」里：从没被选中过 → 立即清；曾经选中过 → 从**最后一次被选中**起算，
+     *   满 [TEMPLATE_GRACE_MS] 才清。
+     * 清理范围：会话模板 + 该会话的发送记录。**快照不参与清理**（它就是两个列表的显示来源）。
+     */
+    fun pruneTemplates(now: Long): SparkConfig {
+        val selected = selectedIds()
+        val dropped = mutableSetOf<String>()
+        var changed = false
+        val kept =
+            conversations.mapNotNull { template ->
+                val id = template.conversationId
+                if (id in selected) {
+                    if (template.selectedAt == now) {
+                        template
+                    } else {
+                        changed = true
+                        template.copy(selectedAt = now)
+                    }
+                } else {
+                    val lastSelected = template.selectedAt
+                    if (lastSelected == 0L || now - lastSelected > TEMPLATE_GRACE_MS) {
+                        changed = true
+                        dropped += id
+                        null
+                    } else {
+                        template
+                    }
+                }
+            }
+        if (!changed) return this
+        // 发送记录跟着一起清：不在「已选目标」里、又没有模板兜着（说明已经过了宽限期或从没选过）的会话，
+        // 它的「今日已发」记录也没有保留意义。
+        val keptIds = kept.map { it.conversationId }.toSet()
+        val keptDays = sentDays.filterKeys { it in selected || it in keptIds }
+        return copy(conversations = kept, sentDays = keptDays)
+    }
+
+    companion object {
+        /** 移出「已选目标」后，模板与发送记录的保留时长。 */
+        const val TEMPLATE_GRACE_MS = 30L * 24 * 60 * 60 * 1000
+
+        /** 会话快照超过这么久没再被扫描到，才当作已删除（见 [mergeSnapshots]）。 */
+        const val SNAPSHOT_GRACE_MS = 30L * 24 * 60 * 60 * 1000
+
+        /** 连续这么多次扫描没出现，会话就从列表里隐藏（数据保留到 [SNAPSHOT_GRACE_MS]）。 */
+        const val HIDDEN_AFTER_MISSES = 3
+
+        /** 内置模板作为继承来源时的 id 前缀（内置模板不在 groups 里，用前缀区分）。 */
+        const val BUILTIN_PREFIX = "builtin:"
+
+        /**
+         * 空白模板的 id：= **不用模板、自己写**。
+         *
+         * 它和自定义模板在继承关系上没有区别（一样「跟随父模板」，一样出现在模板页的派生列表里），
+         * 唯一的区别是父模板内容是空的 —— 所以会话照常发自己写的那段文案。
+         */
+        const val BUILTIN_BLANK = BUILTIN_PREFIX + "blank"
+
+        /**
+         * 合并两层变量：父模板的在前、下级（会话）的在后，同名覆盖。
+         *
+         * - 下级变量**表达式为空**等于没填：父模板有同名的就用父模板的；都没有就保留这条空表达式，
+         *   求值结果为 `null`（`TemplateVarPrelude` 直接赋 null，不会因为语法错变成 undefined）。
+         * - 名字为空的条目一律忽略。
+         */
+        fun mergeVars(
+            parent: List<TemplateVar>,
+            child: List<TemplateVar>,
+        ): List<TemplateVar> {
+            val merged = LinkedHashMap<String, TemplateVar>()
+            parent.filter { it.name.isNotBlank() }.forEach { merged[it.name] = it }
+            child.filter { it.name.isNotBlank() }.forEach { variable ->
+                if (variable.expr.isBlank() && variable.name in merged) return@forEach
+                merged.remove(variable.name)
+                merged[variable.name] = variable
+            }
+            return merged.values.toList()
+        }
+
+        /**
+         * 宏执行前把「结果列表」的两个引用同步一次
+         *（`$spark_result$` 与新写法 `ctx.result` 是同一个数组；脚本可能把其中一个换成了字符串 / 新数组）。
+         */
+        private const val RESULT_NORMALIZE = "__sparkSyncResult();"
+    }
+}
+
+/** 内容哈希（SHA-256 十六进制）。 */

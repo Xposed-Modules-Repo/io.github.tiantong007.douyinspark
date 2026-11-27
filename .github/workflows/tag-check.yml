@@ -1,0 +1,72 @@
+name: tag-check
+
+# 发版前/发版时的版本号一致性校验。
+# 目标：杜绝 v2.1.2 那种「APK 是 20006、README 写 20001、源码写 20005」的分叉。
+#
+# 版本号真源只有一个：android/app/build.gradle.kts 的 defaultConfig 块
+#   versionCode = 30000 ; versionName = "v3.0.0"
+# tag 名 = VersionCode-VersionName。
+
+on:
+  push:
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  version-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 读取版本号真源
+        id: v
+        run: |
+          GRADLE=android/app/build.gradle.kts
+          CODE=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' $GRADLE | head -1)
+          NAME=$(grep -oP 'versionName\s*=\s*"\K[^"]+' $GRADLE | head -1)
+          if [ -z "$CODE" ] || [ -z "$NAME" ]; then
+            echo "::error::android/app/build.gradle.kts 缺少 versionCode / versionName"
+            exit 1
+          fi
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "版本：$CODE / $NAME"
+
+      - name: tag 必须等于 VersionCode-VersionName
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          WANT="${{ steps.v.outputs.code }}-${{ steps.v.outputs.name }}"
+          if [ "$TAG" != "$WANT" ]; then
+            echo "::error::tag 名为 $TAG，应为 $WANT"
+            exit 1
+          fi
+          echo "tag 匹配：$TAG"
+
+      - name: README 版本横幅一致
+        run: |
+          CODE="${{ steps.v.outputs.code }}"
+          NAME="${{ steps.v.outputs.name }}"
+          grep -q "（versionCode $CODE）" README.md \
+            || { echo "::error::README 的版本横幅未对齐 versionCode $CODE"; exit 1; }
+          grep -q "version-anchor: $NAME ($CODE)" README.md \
+            || { echo "::error::README 缺少 <!-- version-anchor: $NAME ($CODE) -->"; exit 1; }
+          echo "README 横幅通过"
+
+      - name: 状态快照一致
+        run: |
+          CODE="${{ steps.v.outputs.code }}"
+          grep -qF "| versionCode | **$CODE** |" docs/状态快照.md \
+            || { echo "::error::docs/状态快照.md 的 versionCode 未同步"; exit 1; }
+          echo "状态快照通过"
+
+      - name: 隐私扫描（真实昵称/手机号关键词）
+        run: |
+          # 示例会话名必须是匿名化的 XXX / YYY；只抓「独立成串」的 11 位手机号
+          #（前后不能是数字，否则时间戳 1794928557000、签名 l=2026... 之类会误报）。
+          if grep -rnE '(^|[^0-9])1[3-9][0-9]{9}([^0-9]|$)' README.md docs/ 2>/dev/null; then
+            echo "::error::发现疑似手机号，请匿名化后再发版"
+            exit 1
+          fi
+          echo "隐私扫描通过"

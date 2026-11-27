@@ -1,0 +1,141 @@
+package com.tiantong.spark.app.ui.common
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Outline
+import android.graphics.Paint
+import android.os.Handler
+import android.os.Looper
+import android.util.LruCache
+import android.view.View
+import android.view.ViewOutlineProvider
+import android.widget.ImageView
+import java.io.File
+import java.security.MessageDigest
+import java.util.concurrent.Executors
+
+/**
+ * 头像加载器：内存缓存 → 磁盘缓存 → 名字首字占位图。
+ *
+ * 模块**不申请 `INTERNET`**，这里不做任何网络请求：图片由宿主（抖音进程）从抖音自己的
+ * 头像缓存里读出来后推过来（见 `host/im/AvatarCache.kt`），本类只读
+ * `cacheDir/avatars/<md5>.png`。没有文件就显示色块首字，界面上不会出现空洞。
+ */
+object AvatarLoader {
+    private val memory = LruCache<String, Bitmap>(96)
+    private val pool = Executors.newFixedThreadPool(3)
+    private val main = Handler(Looper.getMainLooper())
+
+    private const val MAX_EDGE = 256
+
+    /**
+     * 把 [key] 对应的头像装进 [view]；没有缓存时显示 [name] 首字占位图。头像按圆形显示。
+     *
+     * [key] 用稳定的用户 id（`peerUid`），**不用 URL** —— URL 会随换头像 / CDN 参数变化，
+     * 按 id 存才能始终命中「这个用户当前」的头像；宿主写盘时用的是同一个 key。
+     */
+    fun load(
+        context: Context,
+        view: ImageView,
+        key: String,
+        name: String,
+        sizeDp: Int = 42,
+    ) {
+        clipToCircle(view)
+        val size = (sizeDp * context.resources.displayMetrics.density).toInt()
+        view.tag = key
+        val placeholder = placeholder(name, size)
+        memory.get(memoryKey(key, size))?.let {
+            view.setImageBitmap(it)
+            return
+        }
+        view.setImageBitmap(placeholder)
+        if (key.isBlank()) return
+
+        pool.execute {
+            val cache = File(avatarDir(context), fileName(key))
+            val bitmap = if (cache.isFile) decode(cache) else null
+            if (bitmap == null) return@execute
+            memory.put(memoryKey(key, size), bitmap)
+            main.post {
+                if (view.tag == key) view.setImageBitmap(bitmap)
+            }
+        }
+    }
+
+    /** 让 ImageView 以圆形裁切显示（占位图本身就是圆的，一起裁没有副作用）。 */
+    private fun clipToCircle(view: ImageView) {
+        if (view.clipToOutline) return
+        view.outlineProvider =
+            object : ViewOutlineProvider() {
+                override fun getOutline(
+                    target: View,
+                    outline: Outline,
+                ) {
+                    outline.setOval(0, 0, target.width, target.height)
+                }
+            }
+        view.clipToOutline = true
+    }
+
+    /** 名字首字占位图（按名字散列取色）。 */
+    private fun placeholder(
+        name: String,
+        size: Int,
+    ): Bitmap {
+        val key = "placeholder:${name}:$size"
+        memory.get(key)?.let { return it }
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = colorOf(name) }
+        val radius = size / 2f
+        canvas.drawCircle(radius, radius, radius, fill)
+        val letter = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = size * 0.45f
+            textAlign = Paint.Align.CENTER
+        }
+        val text = name.trim().take(1).ifEmpty { "?" }
+        val offset = (letter.descent() + letter.ascent()) / 2f
+        canvas.drawText(text, radius, radius - offset, letter)
+        memory.put(key, bitmap)
+        return bitmap
+    }
+
+    private fun colorOf(name: String): Int {
+        val palette =
+            intArrayOf(0xFF3B7CFF.toInt(), 0xFF12B886.toInt(), 0xFFE8590C.toInt(), 0xFF9C36B5.toInt(), 0xFF1098AD.toInt())
+        val hash = name.fold(0) { acc, c -> acc * 31 + c.code }
+        return palette[Math.abs(hash % palette.size)]
+    }
+
+    private fun decode(file: File): Bitmap? =
+        runCatching {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(file.absolutePath, bounds)
+            val options =
+                BitmapFactory.Options().apply {
+                    inSampleSize =
+                        generateSequence(1) { it * 2 }
+                            .takeWhile { bounds.outWidth / it > MAX_EDGE || bounds.outHeight / it > MAX_EDGE }
+                            .lastOrNull() ?: 1
+                }
+            BitmapFactory.decodeFile(file.absolutePath, options)
+        }.getOrNull()
+
+    private fun avatarDir(context: Context): File = File(context.cacheDir, "avatars")
+
+    /** 缓存文件名：与宿主 `AvatarCache.keyOf` 一致 —— uid 的 UTF-8 MD5 十六进制 + `.png`。 */
+    private fun fileName(key: String): String {
+        val digest = MessageDigest.getInstance("MD5").digest(key.toByteArray(Charsets.UTF_8))
+        return digest.joinToString("") { "%02x".format(it) } + ".png"
+    }
+
+    private fun memoryKey(
+        key: String,
+        size: Int,
+    ): String = "$key:$size"
+}

@@ -1,0 +1,14 @@
+[versions]
+agp = "9.2.1"
+libxposed-api = "102.0.0"
+rhino = "1.7.15"
+webkit = "1.12.1"
+
+[plugins]
+agp-app = { id = "com.android.application", version.ref = "agp" }
+agp-library = { id = "com.android.library", version.ref = "agp" }
+
+[libraries]
+libxposed-api = { group = "io.github.libxposed", name = "api", version.ref = "libxposed-api" }
+rhino = { group = "org.mozilla", name = "rhino", version.ref = "rhino" }
+webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }

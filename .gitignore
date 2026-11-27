@@ -1,0 +1,44 @@
+# 构建产物
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/core-spark/build/
+android/.idea/
+android/core-spark/src/main/assets/docs/manual.md
+
+# APK 只在 release/ 里留最新的
+*.apk
+/release/
+*.idsig
+
+# 签名密钥（绝不入库）
+keystore/
+*.keystore
+*.jks
+*.p12
+
+# 临时
+.tmp/
+*.log
+
+# 真机截图（本地排查用，不入库）
+/s*.png
+/shot*.png
+
+# 本地抓取的配置快照（含真实昵称）
+/.cfg*.json
+.ic/
+
+# 本地真机数据版原型（含真实昵称，不发布）
+/docs/ui/local.html
+
+# 内部开发文档（不上传）
+/.internal/
+
+# 图标设计截图（本地看效果用，不入库）
+/.ic_*.png
+
+# Gradle 签名配置（含 storePassword / keyPassword，一旦创建就会被跟踪）
+release-signing.properties
+android/release-signing.properties
