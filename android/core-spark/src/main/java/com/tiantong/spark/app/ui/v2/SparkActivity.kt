@@ -276,7 +276,15 @@ class SparkActivity : Activity(), Shell {
             background = whitePill()
             visibility = View.GONE
             setOnClickListener {
+                val groupIds = state.shown().map { it.conversationId }
+                val wasAll = state.groupAllPicked()
                 state.togglePickGroup()
+                val skip = state.noBodyCount(groupIds)
+                when {
+                    wasAll -> Unit
+                    skip > 0 -> tip("已全选 ${groupIds.size} 个，其中 $skip 个没有文案不会发送", long = true)
+                    else -> tip("已全选 ${groupIds.size} 个")
+                }
                 rebuild()
             }
         }
@@ -487,9 +495,11 @@ class SparkActivity : Activity(), Shell {
         val names = ids.mapNotNull { id -> state.config.snapshot(id)?.displayName }
         val preview = if (names.isEmpty()) "" else "\n\n" + names.take(8).joinToString("、") +
             if (names.size > 8) " 等 ${names.size} 个" else ""
+        val skip = state.noBodyCount()
+        val skipHint = if (skip > 0) "\n\n其中 $skip 个没有文案，发送时会被跳过。" else ""
         confirm(
             "立即发送给 ${ids.size} 个会话？",
-            "手动发送不受总开关与「今日已发」限制。$preview",
+            "手动发送不受总开关与「今日已发」限制。$skipHint$preview",
             positive = "发送",
         ) {
             sendNow(ids)
@@ -505,8 +515,8 @@ class SparkActivity : Activity(), Shell {
         (fab as? ViewGroup)?.let { group ->
             (group.getChildAt(1) as? android.widget.TextView)?.text = "发送 $count 个"
         }
-        // 全选入口：主页 + 已有勾选 + 当前分组存在可发会话（排除无火花），口径同原型。
-        val showSelAll = count > 0 && current == Page.HOME && state.shown().any { it.hasSpark }
+        // 全选入口：主页 + 已有勾选 + 当前分组有会话（含无火花），数量与分组标题一致。
+        val showSelAll = count > 0 && current == Page.HOME && state.shown().isNotEmpty()
         selAll.visibility = if (showSelAll) View.VISIBLE else View.GONE
         if (showSelAll) {
             (selAll as? android.widget.TextView)?.text =

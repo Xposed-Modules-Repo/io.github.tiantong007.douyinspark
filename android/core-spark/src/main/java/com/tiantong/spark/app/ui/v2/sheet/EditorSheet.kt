@@ -164,7 +164,7 @@ object EditorSheet {
 
             // 与原型一致：没写脚本的会话发送时会被跳过，提前说一声
             if (conversationId != null && body.isBlank()) {
-                bodyView.addView(context.note("这个会话还没写脚本，发送时会被跳过。"), context.lp(MATCH, WRAP))
+                bodyView.addView(context.note("这个会话还没有文案，发送时会被跳过。"), context.lp(MATCH, WRAP))
             }
 
             bodyView.addView(

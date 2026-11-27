@@ -359,7 +359,7 @@ function home(){
 function row(r){
   const flame = r.fl && r.fl !== String(r.d) ? r.fl : '';
   const hasBody = !!((BODY[r.id] || '')).trim();
-  const sub = [hasBody ? '' : '未设置脚本', r.d > 0 ? '火花 ' + r.d + ' 天' : '', flame, r.ex]
+  const sub = [hasBody ? '' : '无文案', r.d > 0 ? '火花 ' + r.d + ' 天' : '', flame, r.ex]
     .filter(Boolean).join(' · ') || '还没开始';
   const tag = r.x === -1
     ? (r.st === '可点亮' ? '<span class="tag light">可点亮</span>' : '<span class="tag none">无火花</span>')
@@ -519,7 +519,7 @@ function settings(){
     '</div>';
 
   h += '<div class="sublabel">关于</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
-    irow('info','版本','v3.1.3（31003）','',"toast('v3.1.3（31003）')") +
+    irow('info','版本','v3.1.4（31004）','',"toast('v3.1.4（31004）')") +
     irow('link','源码','github.com/tiantong007/…douyinspark','',"toast('浏览器里打开仓库')") +
     '</div>';
   return h;
@@ -559,7 +559,7 @@ function renderDrawer(){
   const items = [['home','fire','抖音续火花cc',PENDING().length],['templates','tpl','模板',S.tpls.length],
     ['vars','vars','变量',0],['settings','gear','设置',0]];
   $('drawer').innerHTML =
-    '<div class="head"><b>抖音续火花cc</b><span>v3.1.3（31003）· 已经自动续火花 ' + ACTIVE_DAYS + ' 天了</span></div>' +
+    '<div class="head"><b>抖音续火花cc</b><span>v3.1.4（31004）· 已经自动续火花 ' + ACTIVE_DAYS + ' 天了</span></div>' +
     '<div class="dnav">' + items.map(it =>
       '<a class="' + (S.page === it[0] ? 'on' : '') + '" onclick="go(\'' + it[0] + '\')">' +
       '<span class="ic">' + IC[it[1]] + '</span>' + it[2] +
@@ -580,17 +580,30 @@ function updateFab(){
   f.classList.toggle('on', n > 0 && home);
   f.innerHTML = FIRE_SVG + ' 发送 ' + n + ' 个';
   // 全选入口：仅在主页且已选中至少一行时浮出；范围=当前分组可见且可发（排除无火花）
-  const selRows = home ? shown().filter(r => r.x !== -1) : [];
+  const selRows = home ? shown() : [];
   const allOn = selRows.length > 0 && selRows.every(r => S.picked.has(r.id));
   sa.classList.toggle('on', n > 0 && selRows.length > 0);
   sa.textContent = allOn ? '取消全选' : '全选';
 }
 
 function pickAll(){
-  const sel = shown().filter(r => r.x !== -1);   // 与按钮可见范围一致：本组可发行
+  const sel = shown();   // 本组全部行（含无火花），数量与分组标题一致
   const allOn = sel.length > 0 && sel.every(r => S.picked.has(r.id));
   sel.forEach(r => allOn ? S.picked.delete(r.id) : S.picked.add(r.id));
+  if (!allOn) {
+    const m = sel.filter(r => !(BODY[r.id] || '').trim()).length;
+    toast(m > 0 ? '已全选 ' + sel.length + ' 个，其中 ' + m + ' 个没有文案不会发送' : '已全选 ' + sel.length + ' 个');
+  }
   render();
+}
+
+function noScriptCount(){
+  let n = 0;
+  S.picked.forEach(function(id){
+    const r = D.rows.find(function(x){ return x.id === id; });
+    if (r && !(BODY[r.id] || '').trim()) n++;
+  });
+  return n;
 }
 
 function toggleDrawer(){
@@ -609,8 +622,9 @@ function go(page){
 
 function askSend(){
   const n = S.picked.size;
-  confirmBox('立即发送', '现在给选中的 ' + n + ' 个会话发消息？', '发送', function(){
-    S.picked.clear(); render(); toast('已发 ' + n + ' / 跳过 0 / 失败 0');
+  const skip = noScriptCount();
+  confirmBox('立即发送', '现在给选中的 ' + n + ' 个会话发消息？' + (skip > 0 ? '\n其中 ' + skip + ' 个没有文案，不会发送。' : ''), '发送', function(){
+    const skip = noScriptCount(); S.picked.clear(); render(); toast('已发 ' + (n - skip) + ' / 跳过 ' + skip + ' / 失败 0');
   });
 }
 
@@ -902,9 +916,9 @@ function openEditor(id){
   const has = !!body.trim();
   showSheet('编辑脚本',
     '<div class="hint" id="tplhint" style="margin-bottom:2px">' + tplHint(r, has) + (r.tpl !== -1 ? ' <span class="rst" onclick="resetTpl()">重置</span>' : '') + '</div>' +
-    (has ? '' : '<div class="hint" style="color:#E0523B;margin-top:6px">这个会话还没写脚本，发送时会被跳过。</div>') +
+    (has ? '' : '<div class="hint" style="color:#E0523B;margin-top:6px">这个会话还没有文案，发送时会被跳过。</div>') +
     '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)"' +
-      (has ? '' : ' placeholder="这个会话还没有脚本\\n写点东西，比如：ctx.result.push({ type: \\"emoji\\", name: \\"续火花\\" });"') +
+      (has ? '' : ' placeholder="这个会话还没有文案\\n写点东西，比如：ctx.result.push({ type: \\"emoji\\", name: \\"续火花\\" });"') +
       '>' + esc(body) + '</textarea>' +
     '<div class="toolbar">' +
       '<button class="tbtn" onclick="pickTemplate()">' + ic('clone',12) + ' 模板</button>' +

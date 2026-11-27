@@ -146,21 +146,33 @@ class AppState(context: Context) {
         pending().filterNot { sentToday(it.conversationId) }.forEach { picked.add(it.conversationId) }
     }
 
-    /** 当前筛选分组（shown）内可发会话是否已全部勾选 —— 「全选/取消全选」按钮文案依据。 */
+    /** 当前筛选分组（shown）内会话是否已全部勾选 —— 「全选/取消全选」按钮文案依据。 */
     fun groupAllPicked(): Boolean {
-        val sel = shown().filter { it.hasSpark }
+        val sel = shown()
         return sel.isNotEmpty() && sel.all { it.conversationId in picked }
     }
 
-    /** 全选/取消全选当前分组（排除无火花），口径与原型 pickAll 一致。 */
+    /** 全选/取消全选当前分组全部会话（含无火花），数量与分组标题一致。 */
     fun togglePickGroup() {
-        val sel = shown().filter { it.hasSpark }
+        val sel = shown()
         if (sel.isEmpty()) return
         if (sel.all { it.conversationId in picked }) {
             sel.forEach { picked.remove(it.conversationId) }
         } else {
             picked.addAll(sel.map { it.conversationId })
         }
+    }
+
+    /**
+     * 勾选里「没有文案」的会话数：这些发送时会被跳过。
+     *
+     * 口径与宿主 scriptFor 一致：脚本体为空且没挂宏 = 没有文案。
+     */
+    fun noBodyCount(ids: Collection<String> = picked): Int = ids.count { id ->
+        val own = config.conversation(id)
+        val body = own?.body?.trim().orEmpty()
+        val macros = config.macrosFor(listOf(id) + listOfNotNull(own?.inheritFrom))
+        body.isEmpty() && macros.isEmpty()
     }
 
     fun clearPick() {
