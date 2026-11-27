@@ -4,6 +4,7 @@ import android.app.TimePickerDialog
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import com.tiantong.spark.app.alarm.DailyAlarm
 import com.tiantong.spark.app.ui.v2.comp.MATCH
 import com.tiantong.spark.app.ui.v2.comp.WRAP
 import com.tiantong.spark.app.ui.v2.comp.card
@@ -124,6 +125,7 @@ class SettingsScreen(private val shell: Shell) : PageView {
                             glyphColor = Tokens.DANGER,
                             onClick = {
                                 shell.state.update { it.copy(alarmHour = -1) }
+                                DailyAlarm.schedule(ctx, -1, 0)
                                 shell.rebuild()
                             },
                         ),
@@ -278,6 +280,7 @@ class SettingsScreen(private val shell: Shell) : PageView {
                 shell.activity,
                 { _, h, m ->
                     shell.state.update { it.copy(alarmHour = h, alarmMinute = m, alarmAsked = true) }
+                    DailyAlarm.schedule(ctx, h, m)
                     shell.rebuild()
                     ctx.tip("已设为 ${formatTime(h, m)}")
                 },

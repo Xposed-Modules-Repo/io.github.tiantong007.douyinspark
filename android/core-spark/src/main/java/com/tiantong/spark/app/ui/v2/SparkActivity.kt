@@ -15,6 +15,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.Toast
+import com.tiantong.spark.app.alarm.DailyAlarm
 import com.tiantong.spark.app.provider.ConfigContract
 import com.tiantong.spark.app.ui.v2.comp.AppBar
 import com.tiantong.spark.app.ui.v2.comp.MATCH
@@ -91,6 +92,9 @@ class SparkActivity : Activity(), Shell {
         SelfCheck.runOnce(this)
         setContentView(buildRoot())
         state.reload()
+        // 精确闹钟是一次性的，且 force-stop 后 pending alarm 会丢：
+        // 每次启动都按当前配置重排一次，hour<0 时 schedule 内部会 cancel。
+        DailyAlarm.schedule(this, state.config.alarmHour, state.config.alarmMinute)
         renderDrawer()
         go(Page.HOME)
     }
