@@ -38,7 +38,6 @@ import com.tiantong.spark.app.ui.v2.screen.DocsScreen
 import com.tiantong.spark.app.ui.v2.screen.HomeScreen
 import com.tiantong.spark.app.ui.v2.screen.SettingsScreen
 import com.tiantong.spark.app.ui.v2.screen.TemplatesScreen
-import com.tiantong.spark.app.ui.v2.screen.VarsScreen
 import com.tiantong.spark.app.ui.v2.sheet.EditorSheet
 import com.tiantong.spark.app.ui.v2.state.AppState
 import com.tiantong.spark.app.ui.v2.theme.Tokens
@@ -370,8 +369,6 @@ class SparkActivity : Activity(), Shell {
     private fun countOf(page: Page): Int = when (page) {
         Page.HOME -> state.pending().size
         Page.TEMPLATES -> state.config.groups.size
-        Page.VARS -> state.config.groups.count { it.variables.isNotEmpty() } +
-            state.config.conversations.count { it.variables.isNotEmpty() }
         else -> 0
     }
 
@@ -452,7 +449,6 @@ class SparkActivity : Activity(), Shell {
     private fun create(page: Page): PageView = when (page) {
         Page.HOME -> HomeScreen(this)
         Page.TEMPLATES -> TemplatesScreen(this)
-        Page.VARS -> VarsScreen(this)
         Page.SETTINGS -> SettingsScreen(this)
         Page.DOCS -> DocsScreen(this)
     }

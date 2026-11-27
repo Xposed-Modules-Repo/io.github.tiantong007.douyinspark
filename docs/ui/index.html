@@ -67,8 +67,24 @@ display:grid;place-items:center;color:#fff;font-weight:650;font-size:16px;overfl
 .tag.light{background:rgba(59,130,246,.12);color:#3B82F6}
 .tag.recov{background:rgba(245,158,11,.16);color:#B45309}
 .tag.none{color:var(--dim);background:rgba(0,0,0,.05)}
-.days{font-size:15px;font-weight:700;flex:0 0 auto}
+.tag.renew{color:#0E9F76;background:var(--ok-soft)}
+.tag.nos{color:#fff;background:#E0523B}
+.tag.def{color:var(--faint);background:rgba(0,0,0,.055)}
+.tag.in{color:#0E9F76;background:var(--ok-soft);box-shadow:inset 0 0 0 1px rgba(14,159,118,.35)}
+.acts{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.acts button{font:inherit;font-size:11.5px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--dim);cursor:pointer}
+.acts button.pri2{color:#fff;background:var(--accent);border-color:var(--accent)}
+.acts button.ok{color:#fff;background:#0E9F76;border-color:#0E9F76}
+.acts button.no{color:#fff;background:#151515;border-color:#151515}
+.tag.skip{color:#fff;background:#151515}
+.pnum{font-size:34px;font-weight:750;letter-spacing:-1.2px;line-height:1.1}
+.pnum small{font-size:12.5px;color:var(--dim);font-weight:600;margin-left:7px;letter-spacing:0}
+.pstat{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--dim)}
+.pstat b{color:var(--ink);font-weight:700}
+/* 名单行复用 .row，不再单独定义 .mrow */
+.days{font-size:15px;font-weight:700;flex:0 0 auto;display:flex;align-items:center}
 .days i{font-size:10.5px;font-weight:500;color:var(--dim);font-style:normal;margin-left:1px}
+.days .mf{width:13px;height:13px;margin-right:4px;flex:0 0 13px;color:var(--accent)}
 .sw{width:44px;height:26px;border-radius:13px;background:var(--switch-off);position:relative;flex:0 0 44px;cursor:pointer;transition:background .18s}
 .sw.on{background:var(--accent)}
 .sw:after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;
@@ -158,6 +174,7 @@ font-size:12px;line-height:1.75;color:#E4E6EB;background:#17191F;border:0;border
 .stk{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:52vh;overflow:auto;padding-right:2px}
 .stk button{font:12.5px inherit;font-weight:600;padding:11px 2px;border:0;border-radius:10px;background:var(--seg);color:var(--ink);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stk button:active{background:var(--accent-soft);color:var(--accent)}
+.undef{color:#E0523B;font-weight:650}
 .vgrp{font-size:11px;color:var(--dim);letter-spacing:.4px;margin:12px 0 4px}
 .vgrp:first-child{margin-top:0}
 .vrow{display:flex;align-items:center;gap:8px;padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
@@ -267,8 +284,8 @@ font-size:13px;padding:10px 16px;border-radius:12px;opacity:0;transition:.2s;z-i
 </div></div></div></div>
 <script>
 
-const BODY = {"demo-01": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-02": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-03": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-04": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-05": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-06": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-07": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-08": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-09": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-10": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-11": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-12": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-13": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-14": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-15": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-16": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-17": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-18": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });"};   // 每个会话自己的脚本；不在表里 = 还没写
-const D = {"rows": [{"id": "demo-01", "n": "小满", "d": 762, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-02", "n": "阿哲", "d": 676, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-03", "n": "木木", "d": 593, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-04", "n": "老王", "d": 569, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-05", "n": "七月", "d": 476, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-06", "n": "咸鱼", "d": 441, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-07", "n": "大白", "d": 417, "s": true, "g": false, "st": "重燃中", "fl": "", "ex": "", "av": "", "x": 3, "rn": true, "hs": true}, {"id": "demo-08", "n": "阿离", "d": 407, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-09", "n": "汤圆", "d": 168, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-10", "n": "橙子", "d": 154, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-11", "n": "阿柚", "d": 154, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-12", "n": "十三", "d": 60, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-13", "n": "老K", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-14", "n": "麦麦", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-15", "n": "豆豆", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-16", "n": "阿蓝", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-17", "n": "小鹿", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-18", "n": "咕咕", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-19", "n": "阿元", "d": 35, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-20", "n": "米粒", "d": 28, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-21", "n": "小星", "d": 19, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-22", "n": "阿May", "d": 7, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}], "tpl": [{"n": "续火花表情", "b": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "m": 18}], "today": "2026-11-27", "enabled": true, "ah": 0, "am": 0};
+const BODY = {"demo-01": "", "demo-02": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-03": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-04": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-05": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-06": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-07": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-08": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-09": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-10": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-11": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-12": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "demo-13": "", "demo-14": "", "demo-15": "", "demo-16": "", "demo-17": "", "demo-18": ""};   // 每个会话自己的脚本；不在表里 = 还没写
+const D = {"rows": [{"id": "demo-01", "n": "小满", "d": 762, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-02", "n": "阿哲", "d": 676, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-03", "n": "木木", "d": 593, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-04", "n": "老王", "d": 569, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-05", "n": "七月", "d": 476, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-06", "n": "咸鱼", "d": 441, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-07", "n": "大白", "d": 417, "s": true, "g": false, "st": "重燃中", "fl": "", "ex": "", "av": "", "x": 3, "rn": true, "hs": true}, {"id": "demo-08", "n": "阿离", "d": 407, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-09", "n": "汤圆", "d": 168, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-10", "n": "橙子", "d": 154, "s": true, "g": false, "st": "待对方回", "fl": "", "ex": "", "av": "", "x": 2, "rn": true, "hs": true}, {"id": "demo-11", "n": "阿柚", "d": 154, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-12", "n": "十三", "d": 60, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-13", "n": "老K", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-14", "n": "麦麦", "d": 0, "s": false, "g": false, "st": "可点亮", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-15", "n": "豆豆", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-16", "n": "阿蓝", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-17", "n": "小鹿", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-18", "n": "咕咕", "d": 0, "s": false, "g": false, "st": "", "fl": "", "ex": "", "av": "", "x": -1, "rn": false, "hs": false}, {"id": "demo-19", "n": "阿元", "d": 35, "s": true, "g": true, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-20", "n": "米粒", "d": 28, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-21", "n": "小星", "d": 19, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}, {"id": "demo-22", "n": "阿May", "d": 7, "s": true, "g": false, "st": "在燃", "fl": "", "ex": "", "av": "", "x": 1, "rn": false, "hs": true}], "tpl": [{"n": "续火花表情", "b": "ctx.result.push({ type: \"emoji\", name: \"续火花\" });", "m": 18, "v": [{"n": "问候语", "e": "\"宝\""}, {"n": "天数", "e": "ctx.io.days"}]}], "today": "2026-11-27", "enabled": true, "ah": 0, "am": 0};
 const IC = {menu:'\ueb94',gear:'\ueb51',fire:'\ueaf2',tpl:'\ueaf0',vars:'\uebb8',server:'\ueba2',
 book:'\ueaa4',chev:'\ueab6',check:'\ueab2',close:'\uea76',search:'\uea6d',clear:'\ueabf',wand:'\uebcf',
 copy:'\uebcc',link:'\ueb15',select:'\ueb85',refresh:'\ueb37',shield:'\uebe0',info:'\uea74',graph:'\ueb03',
@@ -276,10 +293,10 @@ clone:'\uea78',discard:'\ueae2',add:'\uea60',edit:'\uea73',trash:'\uea81',play:'
 download:'\ueac2',import:'\ueac3',lock:'\uea75',more:'\uea7c',old:'\ueb28',clippy:'\ueac0',back:'\uea9b'};
 const ic = (k, sz, col) => '<span class="ic" style="font-size:' + (sz||15) + 'px' + (col ? ';color:' + col : '') + '">' + IC[k] + '</span>';
 
-const S = {page:'home', filter:0, picked:new Set(), enabled:D.enabled, checkAtAlarm:false,
+const S = {page:'home', filter:0, pfilter:0, mstat:0, picked:new Set(), enabled:D.enabled, checkAtAlarm:false,
   alarm:[D.ah, D.am], drawer:false, tpls:D.tpl.slice(), sheet:null, preview:null};
 
-const TITLES = {home:'抖音续火花cc', templates:'模板', vars:'变量', settings:'设置', docs:'使用文档'};
+const TITLES = {home:'状态看板', plan:'发送管理', templates:'模板', settings:'设置', docs:'使用文档'};
 // 无火花：没有状态文本（还没建立火花），或状态是「可点亮」这类未点亮的
 // 状态口径全部来自真机快照字段：x=state(-1 无火/1 在燃/2 待回/3 重燃中)、rn=needsRenewal、hs=hasSpark
 const NOFLAME  = r => !r.hs;
@@ -326,13 +343,14 @@ function segment(labels){
 function setFilter(i){ S.filter = i; render(); }
 
 function home(){
-  const total = PENDING().length + SENT().length, done = SENT().length, hot = PENDING().length;
+  const autoRows = AU(), autoN = autoRows.length;   // 分母跟「自动发送」人数走
+  const total = PENDING().length + SENT().length, done = autoRows.filter(r => r.s).length, hot = PENDING().length;
   const next = S.alarm[0] >= 0 ? hhmm(S.alarm[0], S.alarm[1]) : '未设置';
   // 分母：模板选中会话去重后的数量（多个模板取最大的那个集合）
   const tplCount = S.tpls.reduce((m, t) => Math.max(m, t.m || 0), 0);
   // 已燃：状态文案是纯数字（火苗天数）的那些
-  const lit = D.rows.filter(r => /^\d+$/.test(String(r.st || ''))).length;
-  const denom = tplCount || total;
+  const lit = autoRows.filter(r => r.x === 1).length;
+  const denom = autoN || total;
   let h = '<div class="hero"><div class="lab"><i></i>记录时间 ' + D.today + ' 22:14</div>' +
     '<div class="bigrow">' +
       '<div class="big">' + done + '<small>/ ' + denom + ' 已续</small></div>' +
@@ -356,22 +374,39 @@ function home(){
   return h;
 }
 
-function row(r){
+// 统一的行渲染：状态看板与发送管理共用一套结构（头像 42px、名字+状态徽章、副标题、右侧火苗+天数）
+// o.sw === false 不画勾选开关；o.acts 在副标题下方挂按钮；o.sub 覆盖副标题；o.badge === 'right' 把名单徽章挪到右侧
+// 副标题只放状态类信息（无文案 / 火花异常 / 到期），天数只出现在右侧，避免一屏两处说同一件事
+const FIRE_MINI = '<svg class="mf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+function row(r, o){
+  o = o || {};
   const flame = r.fl && r.fl !== String(r.d) ? r.fl : '';
   const hasBody = !!((BODY[r.id] || '')).trim();
-  const sub = [hasBody ? '' : '无文案', r.d > 0 ? '火花 ' + r.d + ' 天' : '', flame, r.ex]
-    .filter(Boolean).join(' · ') || '还没开始';
+  const sub = o.sub != null ? o.sub
+    : [hasBody ? '' : '<span class="tag nos">无文案</span>', flame, r.ex].filter(Boolean).join(' · ');
   const tag = r.x === -1
     ? (r.st === '可点亮' ? '<span class="tag light">可点亮</span>' : '<span class="tag none">无火花</span>')
     : r.x === 3 ? '<span class="tag recov">重燃中</span>'
     : r.x === 2 ? (r.s ? '<span class="tag wait">待燃</span>' : '<span class="tag wait">待续</span>')
     : '<span class="tag done">已燃</span>';
+  const ms = memOf(r);
+  const right = o.badge === 'right';
+  const mtag = right ? ''
+    : ms === 'in' ? '<span class="tag in">固定发送</span>'
+    : ms === 'out' ? '<span class="tag skip">固定不发</span>' : '';
+  const btag = !right ? ''
+    : ms === 'in' ? '<span class="tag in">固定发送</span>'
+    : ms === 'out' ? '<span class="tag skip">固定不发</span>'
+    : '<span class="tag def">默认</span>';
   const av = r.av ? '<img class="av" src="' + r.av + '">' : '<div class="av">' + (r.n||'?').slice(0,1) + '</div>';
   return '<div class="row" onclick="openEditor(\'' + r.id + '\')">' + av +
-    '<div class="who"><div class="n"><span class="nm" style="' + (r.s ? 'color:var(--faint)' : '') + '">' + r.n + '</span>' + tag + '</div>' +
-    '<div class="s">' + sub + '</div></div>' +
-    '<div class="days">' + r.d + '<i>天</i></div>' +
-    '<div class="sw ' + (S.picked.has(r.id) ? 'on' : '') + '" onclick="event.stopPropagation();pick(\'' + r.id + '\')"></div></div>';
+    '<div class="who"><div class="n"><span class="nm" style="' + (r.s ? 'color:var(--faint)' : '') + '">' + r.n + '</span>' + tag + mtag + '</div>' +
+    (sub ? '<div class="s">' + sub + '</div>' : '') +
+    (o.acts ? '<div class="acts">' + acts(r) + '</div>' : '') + '</div>' +
+    btag +
+    '<div class="days">' + FIRE_MINI + r.d + '<i>天</i></div>' +
+    (o.sw === false ? '' : '<div class="sw ' + (S.picked.has(r.id) ? 'on' : '') + '" onclick="event.stopPropagation();pick(\'' + r.id + '\')"></div>') +
+    '</div>';
 }
 function pick(id){ S.picked.has(id) ? S.picked.delete(id) : S.picked.add(id); render(); }
 
@@ -466,31 +501,91 @@ function templates(){
   return h;
 }
 
-const VARS_B = [
-  ['ctx.builtin.date','当天日期 yyyy-MM-dd','2026-11-26'],
-  ['ctx.builtin.time','当前时间 HH:mm','22:14'],
-  ['ctx.builtin.weekday','星期几','周四'],
-  ['ctx.builtin.timestamp','当前毫秒时间戳','1764176040000']];
-const VARS_IO = [
-  ['ctx.io.id','会话 ID','0:1:60675746591:88888888888'],
-  ['ctx.io.nickname','对方昵称','XX'],
-  ['ctx.io.remark','备注名（可能为空）','XX'],
-  ['ctx.io.name','显示名（备注优先）','XX'],
-  ['ctx.io.days','已连续聊天天数','762'],
-  ['ctx.io.state','火花状态码','1'],
-  ['ctx.io.stateText','火花状态文本','已燃'],
-  ['ctx.io.peerUid','对方 UID','88888888888']];
+// ── 发送管理：自动发送 / 不发送（跟今天发没发过无关）──────────────────
+// 自动发送 = 固定发送(in) ∪ 有火花(已燃/待燃/重燃中) － 固定不发(out)
+// 真机对应 SparkConfig.forcedRenew（in）/ forcedSkip（out），引擎候选式不变
+const MS = {
+  '7199841912340120121':'in',                       // tyy：已燃 204 天，固定发送（每天兜底发一条）
+  '0:1:96301650686:2172277289656991':'in',          // 春山：无火花，固定发送
+  '0:1:96301650686:98866556300':'out',              // 靳雅蓉：抖音判定待燃，固定不发
+};
+const MEM_NAME = {auto:'默认', in:'固定发送', out:'固定不发'};
+const memOf = r => MS[r.id] || 'auto';
+// 有火花（已燃/待燃/重燃中）的人每天都要续一次 → 明天照样进名单；没火花不续，除非固定发送
+const inList = r => { const m = memOf(r); return m === 'out' ? false : (m === 'in' || r.x !== -1); };
+const AU = () => D.rows.filter(inList);
+const NOSEND = () => D.rows.filter(r => !inList(r));
+const hasScript = r => !!((BODY[r.id] || '').trim());
+const statusText = r => r.x === -1 ? (r.st === '可点亮' ? '可点亮' : '无火花')
+  : r.x === 3 ? '重燃中' : r.x === 2 ? '待燃' : '已燃';
+function setMem(id, v){
+  if (v === 'auto') delete MS[id]; else MS[id] = v;
+  render();
+  toast('已设为「' + MEM_NAME[v] + '」');
+}
+function whyNo(r){
+  const m = memOf(r);
+  if (m === 'out') return r.x === -1 ? '固定不发 · 无火花' : '固定不发 · 永不自动续';
+  return '无火花 · 没火花可续';
+}
+function acts(r){
+  const id = r.id, m = memOf(r);
+  const b = (label, v, cls) => '<button class="' + (cls || '') + '" onclick="event.stopPropagation();setMem(\'' + id + '\',\'' + v + '\')">' + label + '</button>';
+  if (inList(r)) return (m === 'in' ? b('恢复默认', 'auto', 'ok') : '') + b('固定不发', 'out', 'no');
+  return (m === 'out' ? b('恢复默认', 'auto', 'ok') : '') + b('固定发送', 'in', 'pri2');
+}
+// 发送管理的名单行：复用看板的 row()，多一排按钮、去掉勾选开关、名单徽章挪到右侧（默认 / 固定发送 / 固定不发）
+function memRow(r){
+  return row(r, {
+    sw: false,
+    acts: true,
+    badge: 'right',
+    sub: hasScript(r) ? (inList(r) ? '' : whyNo(r)) : '<span class="tag nos">无文案</span> · 不会发送'
+  });
+}
+function pseg(labels, cur, fn){
+  return '<div class="segmented">' + labels.map(function(l, i){
+    return '<button class="' + (cur === i ? 'on' : '') + '" onclick="' + fn + '(' + i + ')">' + l + '</button>';
+  }).join('') + '</div>';
+}
+function setMStat(i){ S.mstat = i; render(); }
+function plan(){
+  const au = AU(), no = NOSEND();
+  const inN = au.filter(r => memOf(r) === 'in').length;
+  const judgeN = au.length - inN;
 
-function vars(){
-  let h = '<div class="note"><i></i><p>变量在发送那一刻取值。内置变量分两个命名空间：<code>ctx.builtin</code> 是时间，<code>ctx.io</code> 是这个会话的对方信息。模板里写的变量所有会话共用，会话里写的只对那一个生效，同名时会话优先，路径是 <code>ctx.template.名字</code>。</p></div>';
-  h += '<div class="sublabel">时间</div><div class="card" style="padding-top:6px;padding-bottom:6px">' +
-    VARS_B.map(v => '<div class="varrow"><code>' + v[0] + '</code><span class="d">' + v[1] + '</span><span class="v">' + v[2] + '</span></div>').join('') + '</div>';
-  h += '<div class="sublabel">这个会话的对方</div><div class="card" style="padding-top:6px;padding-bottom:6px">' +
-    VARS_IO.map(v => '<div class="varrow"><code>' + v[0] + '</code><span class="d">' + v[1] + '</span><span class="v">' + v[2] + '</span></div>').join('') + '</div>';
-  h += '<div class="sublabel">模板变量</div><div class="card" style="padding:0">' +
-    empty('vars','模板里还没有自定义变量','在模板编辑页点「变量」添加，脚本里用 ctx.template.名字') + '</div>';
-  h += '<div class="sublabel">会话变量</div><div class="card" style="padding:0">' +
-    empty('vars','会话里还没有覆盖变量','在会话编辑页点「变量」添加，脚本里用 ctx.template.名字') + '</div>';
+  let h = '';
+
+  h += '<div class="card">' +
+    '<div class="pnum">' + au.length + '<small>人会自动续火花</small></div>' +
+    '<div class="pstat">' +
+      '<span>固定发送 <b>' + inN + '</b></span>' +
+      '<span>有火花 <b>' + judgeN + '</b></span>' +
+      '<span>不会续 <b>' + no.length + '</b></span>' +
+    '</div>' +
+    '<div class="hint" style="margin-top:9px">' +
+      (S.enabled ? '自动续火花已开启' : '自动续火花已关闭') + ' · 下一轮 ' +
+      (S.alarm[0] >= 0 ? hhmm(S.alarm[0], S.alarm[1]) : '未设置定时唤醒') + '</div>' +
+    '</div>';
+
+  h += pseg(['自动发送 ' + au.length, '不发送 ' + no.length], S.mstat, 'setMStat');
+
+  const list = (S.mstat === 0 ? au : no).slice();
+  list.sort(function(a, b){
+    const w = r => !hasScript(r) ? 0 : memOf(r) === 'in' ? 1 : memOf(r) === 'out' ? 1 : 2;
+    return w(a) - w(b) || b.d - a.d;
+  });
+
+
+
+  h += '<div class="list">' + list.map(memRow).join('') + '</div>';
+
+  h += '<div class="sublabel">说明</div><div class="card"><div class="hint">' +
+    '<b>默认</b>：只要还有火花（已燃 / 待燃 / 重燃中）就在名单里，每天自动续一次 —— 火花是每天续一次才不断的，已燃只是今天续过了，明天照样续。<br>' +
+    '<b>固定发送</b>：没火花也每天发 —— 想从头点亮没火花的人、或者已燃的大火花想额外兜底，都用这个。<br>' +
+    '<b>固定不发</b>：永远不自动续，即使有火花、明天掉到待燃也不发；点「恢复默认」放回默认。<br>' +
+    '这张名单跟"今天发没发过"完全无关，也不影响主页手动勾选发送。' +
+    '</div></div>';
   return h;
 }
 
@@ -546,8 +641,8 @@ function render(){
   $('title').textContent = TITLES[S.page];
   let h = '';
   if (S.page === 'home') h = home();
+  else if (S.page === 'plan') h = plan();
   else if (S.page === 'templates') h = templates();
-  else if (S.page === 'vars') h = vars();
   else if (S.page === 'settings') h = settings();
   else if (S.page === 'docs') h = docsPage();
   view().innerHTML = h;
@@ -556,8 +651,8 @@ function render(){
 }
 
 function renderDrawer(){
-  const items = [['home','fire','抖音续火花cc',PENDING().length],['templates','tpl','模板',S.tpls.length],
-    ['vars','vars','变量',0],['settings','gear','设置',0]];
+  const items = [['home','fire','状态看板',PENDING().length],['plan','select','发送管理',AU().length],['templates','tpl','模板',S.tpls.length],
+['settings','gear','设置',0]];
   $('drawer').innerHTML =
     '<div class="head"><b>抖音续火花cc</b><span>v3.1.4（31004）· 已经自动续火花 ' + ACTIVE_DAYS + ' 天了</span></div>' +
     '<div class="dnav">' + items.map(it =>
@@ -643,7 +738,7 @@ const VARLIST = [
             ['ctx.io.stateText','状态文案，如「重燃中」'],
             ['ctx.io.peerUid','对方 uid'],
             ['ctx.io.id','会话 id']]],
-  ['自定义变量', [['ctx.template.问候语','模板或会话里加的变量，名字自己起']]],
+  ['模板变量', [['ctx.template.vars["问候语"]','模板里设的变量，名字自己起']]],
 ];
 
 function tplName(r){
@@ -970,24 +1065,52 @@ function inlinePreview(btn){
   d.scrollIntoView({block:'nearest'});
 }
 
-function previewHtml(program){
-  // 变量按样例值展开：nickname/remark/name -> XX，days -> 762
-  const SAMPLE = {'ctx.builtin.date':'2026-11-26','ctx.builtin.time':'22:14','ctx.builtin.weekday':'周四',
+const SAMPLE = {'ctx.builtin.date':'2026-11-26','ctx.builtin.time':'22:14','ctx.builtin.weekday':'周四',
     'ctx.builtin.timestamp':'1764176040000','ctx.io.nickname':'XX','ctx.io.remark':'XX','ctx.io.name':'XX',
     'ctx.io.days':'762','ctx.io.state':'1','ctx.io.stateText':'已燃','ctx.io.peerUid':'88888888888',
     'ctx.io.id':'0:1:60675746591:88888888888'};
-  let src = String(program).replace(/ctx\.(?:io|builtin)\.[A-Za-z]+/g, function(m){ return SAMPLE[m] !== undefined ? SAMPLE[m] : ''; });
-  src = src.replace(/ctx\.template\.[A-Za-z_][\w]*/g, 'XX');
+// 模板变量表：模板里设的 name -> JS 表达式（真机由 TemplateVarPrelude 按序求值）
+function tplVarTable(){
+  const t = {};
+  D.tpl.forEach(g => (g.v || []).forEach(v => { if (v && v.n) t[v.n] = v.e; }));
+  return t;
+}
+// 只够演示的求值：字符串字面量 / 数字 / ctx.io.* / ctx.builtin.*，认不出的一律 null
+function evalVar(expr){
+  const e = String(expr == null ? '' : expr).trim();
+  if (!e) return null;
+  const lit = e.match(/^["']([\s\S]*)["']$/);
+  if (lit) return lit[1];
+  if (/^-?\d+(?:\.\d+)?$/.test(e)) return e;
+  if (SAMPLE[e] !== undefined) return SAMPLE[e];
+  return null;
+}
+function previewHtml(program){
+  // 变量按样例值展开：nickname/remark/name -> XX，days -> 762
+    let src = String(program).replace(/ctx\.(?:io|builtin)\.[A-Za-z]+/g, function(m){ return SAMPLE[m] !== undefined ? SAMPLE[m] : ''; });
+  // 模板变量：真机写法 ctx.template.vars["名"]，按模板里设的表达式求值；没设就标 undefined
+  const TV = tplVarTable();
+  src = src.replace(/ctx\.template\.vars\[\s*["']([^"']+)["']\s*\]/g, function(_, n){
+    const v = evalVar(TV[n]);
+    return v === null ? '__UNDEF__' : v;
+  });
+  // 旧 mock 写法 ctx.template.名 兜底（引擎里不存在，仅容错）
+  // 中文变量名也要能丢进去：裸路径 ctx.template.名（旧 mock 写法）按表求值
+  src = src.replace(/ctx\.template\.(?!vars\b)([A-Za-z_\u4e00-\u9fa5][\w\u4e00-\u9fa5]*)/g, function(_, n){
+    const v = evalVar(TV[n]);
+    return v === null ? '__UNDEF__' : v;
+  });
   src = src.replace(/"\s*\+\s*/g, '').replace(/\s*\+\s*"/g, '');
-  const emoji = /type:\s*["']emoji/.test(src);
+  const sticker = (src.match(/\[STICKER:([^\]]*)\]/) || [])[1] || '';
+  const emoji = /type:\s*["']emoji/.test(src) || !!sticker;
   // 取 push(...) 括号里的全部内容，去掉引号与加号，变量已经换成样例值
   const call = src.match(/push\(\s*([^()]*)\)/);
   let plain = call ? call[1].replace(/^[\s"']+|[\s"']+$/g, '').replace(/["']/g, '').replace(/\s*\+\s*/g, ' ').trim() : '';
   if (/^\{/.test(plain) || /type:\s*emoji/.test(plain)) plain = '';
   let inner = '';
-  if (plain) inner += '<span class="seq">第 1 条</span><div class="bubble">' + esc(plain) + '</div>';
+  if (plain && !/\[STICKER:/.test(plain)) inner += '<span class="seq">第 1 条</span><div class="bubble">' + esc(plain).replace(/__UNDEF__/g, '<span class="undef">undefined</span>') + '</div>';
   if (emoji) inner += '<span class="seq">第 ' + (inner ? 2 : 1) + ' 条</span>' +
-    '<div class="emoji">' + ic('fire',34,'var(--warn)') + '<span>续火花</span></div>';
+    '<div class="emoji">' + ic('fire',34,'var(--warn)') + '<span>' + (sticker || '续火花') + '</span></div>';
   return '<div class="hint" style="margin-bottom:8px">会发出 ' + ((inner.split('class="seq"').length - 1)) + ' 条消息，按下面的顺序</div>' +
     '<div class="chat">' + inner + '</div>' +
     '<div class="hint" style="margin-top:8px">发送时表情自成一条，不跟文字合并。</div>';

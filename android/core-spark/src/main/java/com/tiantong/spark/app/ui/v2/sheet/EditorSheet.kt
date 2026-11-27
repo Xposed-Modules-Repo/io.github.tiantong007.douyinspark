@@ -174,10 +174,10 @@ object EditorSheet {
                     if (conversationId != null) {
                         addView(context.tbtn(Tokens.Icon.CLONE, "模板") { pickTemplate(shell, config, conversation, editor, onPick = { pendingInherit = it }, inheritHint = inheritHint) }, context.lp(WRAP, WRAP))
                         addView(context.tbtn(Tokens.Icon.FIRE, "表情", fire = true) { pickEmoji(shell, editor) }, context.lp(WRAP, WRAP, left = 7))
-                        addView(context.tbtn(Tokens.Icon.VARS, "变量") { pickVar(shell, config, conversationId, editor) }, context.lp(WRAP, WRAP, left = 7))
+                        addView(context.tbtn(Tokens.Icon.VARS, "变量") { pickVar(shell, conversationId = conversationId, templateId = null, editor = editor) }, context.lp(WRAP, WRAP, left = 7))
                     } else {
                         addView(context.tbtn(Tokens.Icon.FIRE, "表情", fire = true) { pickEmoji(shell, editor) }, context.lp(WRAP, WRAP))
-                        addView(context.tbtn(Tokens.Icon.VARS, "变量") { pickVar(shell, config, conversationId, editor) }, context.lp(WRAP, WRAP, left = 7))
+                        addView(context.tbtn(Tokens.Icon.VARS, "变量") { pickVar(shell, conversationId = null, templateId = templateId, editor = editor) }, context.lp(WRAP, WRAP, left = 7))
                     }
                     addView(context.tbtn(Tokens.Icon.PREVIEW, "预览") {
                         // 内联展开：不另开一层弹窗，避免叠在编辑弹层上面
@@ -210,10 +210,13 @@ object EditorSheet {
             // 保存时顺手清掉零宽字符与花引号：从聊天里复制过来的脚本常夹着看不见的字符
             val text = normalize(editorRef?.text?.toString().orEmpty())
             val name = nameField?.text?.toString()?.trim().orEmpty()
+            // 变量是在弹层里直接落盘的，这里必须重新读一次，否则旧快照会把新变量覆盖回去
+            val fresh = shell.state.config
             if (conversationId != null) {
-                saveConversation(shell, config, conversationId, text, pendingInherit)
+                saveConversation(shell, fresh, conversationId, text, pendingInherit)
             } else {
-                saveTemplate(shell, config, group, if (group == null) name.ifBlank { "新模板" } else group.name, text)
+                val freshGroup = group?.let { fresh.group(it.id) }
+                saveTemplate(shell, fresh, freshGroup, if (freshGroup == null) name.ifBlank { "新模板" } else freshGroup.name, text)
             }
             sheet.dismiss()
             context.tip("已保存")
@@ -326,8 +329,16 @@ object EditorSheet {
             .show()
     }
 
-    private fun pickVar(shell: Shell, config: SparkConfig, conversationId: String?, editor: EditText) {
+    /**
+     * 「变量」按钮 —— 只负责插入，不做增删改。
+     *
+     * 变量本身属于配置（模板 / 会话的 variables 字段），在别处设置；
+     * 这里只把引擎认的路径 `${ctx.template.vars["名"]}` 插到光标处。
+     * 会话模式额外列出这个会话自己的变量名与继承父模板的变量名。
+     */
+    private fun pickVar(shell: Shell, conversationId: String?, templateId: String?, editor: EditText) {
         val ctx = shell.context
+        val config = shell.state.config
         var dialog: AlertDialog? = null
 
         val container = LinearLayout(ctx)
@@ -347,7 +358,6 @@ object EditorSheet {
                         addView(ctx.text(name, Tokens.T_BODY, Tokens.ACCENT, bold = true), ctx.lp(WRAP, WRAP))
                         addView(ctx.text(desc, Tokens.T_TINY, Tokens.INK_FAINT), ctx.lp(0, WRAP, 1f, left = 10))
                         setOnClickListener {
-                            // 引擎只认 \${ctx.template.vars["..."]}，与预览/执行同一套取值
                             insert(editor, "\${ctx.template.vars[\"$name\"]}")
                             dialog?.dismiss()
                         }
@@ -358,13 +368,22 @@ object EditorSheet {
         }
 
         VAR_GROUPS.forEach { (title, vars) -> section(title, vars) }
+
         if (conversationId != null) {
-            // 这个会话自己的变量 + 继承父模板的变量（说明列统一写「模板变量」）
-            val own = config.conversation(conversationId)?.variables?.map { it.name } ?: emptyList()
-            val fromParent = config.conversation(conversationId)?.inheritFrom
-                ?.let { config.group(it)?.variables?.map { v -> v.name } } ?: emptyList()
-            section("这个会话的变量", own.map { it to "模板变量" })
-            section("继承模板的变量", fromParent.map { it to "模板变量" })
+            val conversation = config.conversation(conversationId)
+            section("这个会话的变量", conversation?.variables?.map { it.name to "模板变量" } ?: emptyList())
+            section(
+                "继承模板的变量",
+                conversation?.inheritFrom?.let { config.group(it)?.variables?.map { v -> v.name } }?.map { it to "模板变量" }
+                    ?: emptyList(),
+            )
+        }
+
+        if (templateId != null) {
+            section(
+                "这个模板的变量",
+                config.group(templateId)?.variables?.map { it.name to it.expr.ifBlank { "（空）" } } ?: emptyList(),
+            )
         }
 
         dialog = AlertDialog.Builder(shell.activity)

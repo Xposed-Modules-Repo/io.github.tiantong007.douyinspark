@@ -7,7 +7,6 @@ import com.tiantong.spark.app.ui.v2.theme.Tokens
 enum class Page(val label: String, val glyph: String) {
     HOME("抖音续火花cc", Tokens.Icon.FIRE),
     TEMPLATES("模板", Tokens.Icon.TEMPLATE),
-    VARS("变量", Tokens.Icon.VARS),
     SETTINGS("设置", Tokens.Icon.GEAR),
 
     /** 使用文档。不在抽屉主列表里，藏在下方的独立入口。 */
