@@ -43,13 +43,15 @@ object EmojiImageCache {
         var batch = Bundle()
         var batchBytes = 0
         var batchUrls = Bundle()
+        var batchNames = Bundle()
 
         fun flush() {
             if (batch.isEmpty) return
-            val written = ConfigClient.putEmojis(context, batch, batchUrls)
+            val written = ConfigClient.putEmojis(context, batch, batchUrls, batchNames)
             if (written > 0) pushed += written
             batch = Bundle()
             batchUrls = Bundle()
+            batchNames = Bundle()
             batchBytes = 0
         }
 
@@ -59,6 +61,7 @@ object EmojiImageCache {
             if (bytes.size > MAX_IMAGE_BYTES) return@forEach
             batch.putByteArray(keyOf(name), bytes)
             batchUrls.putString(keyOf(name), url)
+            batchNames.putString(keyOf(name), name.trim())
             batchBytes += bytes.size
             if (batchBytes >= BATCH_BYTES) flush()
         }

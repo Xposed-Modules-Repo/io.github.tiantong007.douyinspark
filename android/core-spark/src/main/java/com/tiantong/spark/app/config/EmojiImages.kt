@@ -26,6 +26,24 @@ object EmojiImages {
         return runCatching { BitmapFactory.decodeFile(f.absolutePath) }.getOrNull()
     }
 
+    /**
+     * 当前可用的全部表情名：宿主同步来的 index.json（抖音 keva 下发的全量目录）
+     * 并上硬编码目录（续火花，兜底——宿主还没推过时至少有它）。
+     * 保序：index.json 的顺序在前，硬编码缺的补在后面。
+     */
+    fun names(context: Context): List<String> {
+        val out = linkedSetOf<String>()
+        runCatching {
+            val f = File(File(context.cacheDir, "emojis"), "index.json")
+            if (f.isFile) {
+                val arr = org.json.JSONArray(f.readText())
+                for (i in 0 until arr.length()) arr.optString(i)?.takeIf { it.isNotBlank() }?.let { out += it }
+            }
+        }
+        com.tiantong.spark.app.config.EmojiCatalog.names().forEach { out += it }
+        return out.toList()
+    }
+
     private fun md5(text: String): String =
         MessageDigest
             .getInstance("MD5")

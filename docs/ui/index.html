@@ -77,6 +77,7 @@ transition:left .18s;box-shadow:0 1px 2px rgba(0,0,0,.18)}
 .card{background:#fff;border-radius:18px;padding:15px 16px;margin-top:12px;box-shadow:0 1px 3px rgba(0,0,0,.045)}
 .card h3{margin:0 0 3px;font-size:14.5px;font-weight:650;display:flex;align-items:center;gap:7px}
 .hint{font-size:12px;color:var(--dim);line-height:1.6}
+.rst{color:var(--accent);font-weight:650;cursor:pointer;margin-left:8px;user-select:none}
 .sublabel{font-size:13px;color:var(--dim);font-weight:700;padding:18px 4px 8px}
 .badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:6px;line-height:1.5}
 .badge.ok{color:#0E9F76;background:var(--ok-soft)}
@@ -886,13 +887,21 @@ function insertVar(path){
   toast(empty ? ('已插入整句：' + path) : ('已插入片段：' + path));
 }
 
+function resetTpl(){
+  if (!S.editing) return;
+  const ti = S.editing.tpl == null ? 0 : S.editing.tpl;
+  const ta = document.getElementById('ed');
+  if (D.tpl[ti] && ta) { ta.value = D.tpl[ti].b; cntEd(ta); }
+  toast('已恢复为父模板内容，保存后生效');
+}
+
 function openEditor(id){
   const r = D.rows.find(x => x.id === id) || {n:'未知会话', id:id};
   S.sheet = 'editor'; S.editing = r;
   const body = BODY[r.id] || '';
   const has = !!body.trim();
   showSheet('编辑脚本',
-    '<div class="hint" id="tplhint" style="margin-bottom:2px">' + tplHint(r, has) + '</div>' +
+    '<div class="hint" id="tplhint" style="margin-bottom:2px">' + tplHint(r, has) + (r.tpl !== -1 ? ' <span class="rst" onclick="resetTpl()">重置</span>' : '') + '</div>' +
     (has ? '' : '<div class="hint" style="color:#E0523B;margin-top:6px">这个会话还没写脚本，发送时会被跳过。</div>') +
     '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)"' +
       (has ? '' : ' placeholder="这个会话还没有脚本\\n写点东西，比如：ctx.result.push({ type: \\"emoji\\", name: \\"续火花\\" });"') +

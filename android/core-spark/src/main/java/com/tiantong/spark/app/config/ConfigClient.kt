@@ -114,12 +114,14 @@ object ConfigClient {
         context: Context,
         images: Bundle,
         urls: Bundle,
+        names: Bundle = Bundle(),
     ): Int =
         runCatching {
             val extras =
                 Bundle().apply {
                     putBundle(ConfigContract.KEY_IMAGES, images)
                     putBundle(ConfigContract.KEY_URLS, urls)
+                    putBundle(ConfigContract.KEY_NAMES, names)
                 }
             val result = context.contentResolver.call(ConfigContract.URI, ConfigContract.METHOD_PUT_EMOJIS, null, extras)
             if (result?.getBoolean(ConfigContract.KEY_OK) == true) {

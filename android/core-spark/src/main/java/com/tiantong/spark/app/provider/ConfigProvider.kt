@@ -106,6 +106,9 @@ object ConfigContract {
     /** 头像来源 URL Bundle（key 同上，value = 该头像的下载地址），用于跳过没变的图。 */
     const val KEY_URLS = "urls"
 
+    /** 表情 key → 名字（key 与 [KEY_IMAGES] 内的 md5 key 一致），用来落盘 index.json。 */
+    const val KEY_NAMES = "names"
+
     /** 本次实际写入的张数（int）—— 与请求张数的差就是「URL 没变、跳过」的数量。 */
     const val KEY_WRITTEN = "written"
 
@@ -220,7 +223,8 @@ class ConfigProvider : ContentProvider() {
             ConfigContract.METHOD_PUT_EMOJIS -> {
                 val images = extras?.getBundle(ConfigContract.KEY_IMAGES)
                 val urls = extras?.getBundle(ConfigContract.KEY_URLS) ?: Bundle()
-                val written = if (images == null) -1 else writeImages(context, "emojis", images, urls)
+                val names = extras?.getBundle(ConfigContract.KEY_NAMES) ?: Bundle()
+                val written = if (images == null) -1 else writeImages(context, "emojis", images, urls, names)
                 Bundle().apply {
                     putBoolean(ConfigContract.KEY_OK, written >= 0)
                     putInt(ConfigContract.KEY_WRITTEN, written.coerceAtLeast(0))
@@ -247,6 +251,7 @@ class ConfigProvider : ContentProvider() {
         subdir: String,
         images: Bundle,
         urls: Bundle,
+        names: Bundle = Bundle(),
     ): Int {
         var ok = true
         var written = 0
@@ -268,7 +273,34 @@ class ConfigProvider : ContentProvider() {
                 written++
             }.onFailure { ok = false }
         }
+        if (subdir == "emojis") writeEmojiIndex(context, dir, names)
         return if (ok) written else -1
+    }
+
+    /**
+     * 表情名字索引：`cacheDir/emojis/index.json` = 名字数组。
+     * 宿主只按 md5 推图片，App 侧靠这个索引才能列出「抖音当前下发的全部表情」。
+     * 增量合并：新名字追加到末尾，已存在的位置不动（编辑器列表顺序稳定）。
+     */
+    private fun writeEmojiIndex(
+        context: Context,
+        dir: File,
+        names: Bundle,
+    ) {
+        runCatching {
+            val file = File(dir, "index.json")
+            val known = linkedSetOf<String>()
+            if (file.isFile) {
+                org.json.JSONArray(file.readText()).let { arr ->
+                    for (i in 0 until arr.length()) known += arr.optString(i)
+                }
+            }
+            names.keySet().forEach { key -> names.getString(key)?.takeIf { it.isNotBlank() }?.let { known += it } }
+            val arr = org.json.JSONArray()
+            known.forEach { arr.put(it) }
+            dir.mkdirs()
+            file.writeText(arr.toString())
+        }
     }
 
     private companion object {
