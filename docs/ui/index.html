@@ -30,6 +30,8 @@ box-shadow:0 26px 70px rgba(0,0,0,.6),0 0 0 10px #101317,0 0 0 11px #2A2E37}
 .appbar h1{flex:1;margin:0;font-size:23px;font-weight:750;letter-spacing:-.4px}
 .iconbtn{width:36px;height:36px;border:0;border-radius:12px;background:#fff;color:var(--ink);font-size:16px;
 display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.07);flex:0 0 36px;padding:0}
+.appdiv{height:1px;flex:0 0 auto;margin:0 16px;background:var(--line);opacity:0;transition:opacity .16s}
+.appdiv.on{opacity:1}
 .viewport{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 16px 96px;scrollbar-width:none}
 .viewport::-webkit-scrollbar{width:0}
 .hero{position:relative;border-radius:22px;padding:12px 18px 15px;overflow:hidden;margin-top:10px;
@@ -52,39 +54,56 @@ background:radial-gradient(circle,rgba(254,44,85,.55),rgba(254,44,85,0) 70%)}
 .segmented button{flex:1;font:inherit;font-size:12px;padding:7px 1px;border:0;border-radius:9px;background:none;color:var(--dim);cursor:pointer}
 .segmented button.on{background:#fff;color:var(--ink);font-weight:650;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .list{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.045)}
-.row{display:flex;align-items:center;gap:12px;padding:12px 15px;cursor:pointer;border-bottom:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:12px;padding:12px 15px;min-height:66px;box-sizing:border-box;cursor:pointer;border-bottom:1px solid var(--line)}
 .row:last-child{border-bottom:0}
 .av{width:42px;height:42px;border-radius:50%;flex:0 0 42px;object-fit:cover;background:#DDE0E6;
 display:grid;place-items:center;color:#fff;font-weight:650;font-size:16px;overflow:hidden}
 .who{flex:1;min-width:0}
 .who .n{font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden}
+.who .n .nm{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .who .n span.nm{overflow:hidden;text-overflow:ellipsis}
-.who .s{font-size:12px;color:var(--dim);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tag{font-size:10.5px;font-weight:650;padding:2px 7px;border-radius:6px;flex:0 0 auto;line-height:1.5}
-.tag.done{color:#0E9F76;background:var(--ok-soft)}
+.who .s{font-size:12px;color:var(--dim);margin-top:4px;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
+.who .s .stxt{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:10.5px;font-weight:650;padding:0 7px;border-radius:6px;flex:0 0 auto;height:19px;line-height:19px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.tag.done{color:#0E9F76;background:rgba(14,159,118,.09)}
 .tag.wait{color:#B4780A;background:var(--warn-soft)}
 .tag.grp{color:#2B6FD6;background:var(--info-soft)}
 .tag.light{background:rgba(59,130,246,.12);color:#3B82F6}
 .tag.recov{background:rgba(245,158,11,.16);color:#B45309}
-.tag.none{color:var(--dim);background:rgba(0,0,0,.05)}
+.tag.none{color:#6B7076;background:rgba(0,0,0,.05)}
 .tag.renew{color:#0E9F76;background:var(--ok-soft)}
-.tag.nos{color:#fff;background:#E0523B}
-.tag.def{color:var(--faint);background:rgba(0,0,0,.055)}
-.tag.in{color:#0E9F76;background:var(--ok-soft);box-shadow:inset 0 0 0 1px rgba(14,159,118,.35)}
+.tag.nos{color:#E0523B;background:rgba(224,82,59,.10)}
+.tag.def{color:#9AA0A6;background:rgba(0,0,0,.045)}
+.tag.in{color:#0E9F76;background:rgba(14,159,118,.09);box-shadow:inset 0 0 0 1px rgba(14,159,118,.24)}
 .acts{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
-.acts button{font:inherit;font-size:11.5px;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--dim);cursor:pointer}
-.acts button.pri2{color:#fff;background:var(--accent);border-color:var(--accent)}
-.acts button.ok{color:#fff;background:#0E9F76;border-color:#0E9F76}
-.acts button.no{color:#fff;background:#151515;border-color:#151515}
-.tag.skip{color:#fff;background:#151515}
+.acts button{font:inherit;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.13);background:#fff;color:var(--dim);cursor:pointer;transition:background .12s,border-color .12s}
+/* 三态按钮同一套形态：浅色底 + 同色系文字 + 同色系描边，只靠色相区分语义 */
+.acts button.pri2{color:var(--accent);background:rgba(227,49,73,.055);border-color:rgba(227,49,73,.26)}
+.acts button.ok{color:#0E9F76;background:rgba(14,159,118,.06);border-color:rgba(14,159,118,.26)}
+.acts button.no{color:#33363B;background:rgba(0,0,0,.045);border-color:rgba(0,0,0,.14)}
+.acts button:hover{background:#fff;border-color:rgba(0,0,0,.26)}
+.acts.acts-r{margin-top:0;flex:0 0 auto;flex-direction:column;align-items:stretch;justify-content:center;gap:4px;min-width:72px}
+.acts.acts-r button{padding:4px 9px;font-size:11px;border-radius:7px;white-space:nowrap}
+.tag.skip{color:#33363B;background:rgba(0,0,0,.07)}
+.hero .bigrow.three .big:nth-child(1){justify-content:flex-start}
+.hero .bigrow.three .big:nth-child(2){justify-content:center}
+.hero .bigrow.three .big:nth-child(3){justify-content:flex-end}
+.hero .bigrow.three{gap:8px;justify-content:space-between}
+.hero .bigrow.three .big:last-child{margin-left:0}
+.hero .bigrow.three .big{font-size:26px;flex:1 1 0;min-width:0}
+.hero .bigrow.three .big small{font-size:11.5px}
+.hero .hstat{display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:12px;color:rgba(255,255,255,.62);position:relative;z-index:1}
+.hero .hstat b{color:#fff;font-weight:700}
+.hero .hint2{margin-top:4px;font-size:11.5px;color:rgba(255,255,255,.5);position:relative;z-index:1}
+.segmented.seg2{margin-top:0}
 .pnum{font-size:34px;font-weight:750;letter-spacing:-1.2px;line-height:1.1}
 .pnum small{font-size:12.5px;color:var(--dim);font-weight:600;margin-left:7px;letter-spacing:0}
 .pstat{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--dim)}
 .pstat b{color:var(--ink);font-weight:700}
 /* 名单行复用 .row，不再单独定义 .mrow */
-.days{font-size:15px;font-weight:700;flex:0 0 auto;display:flex;align-items:center}
-.days i{font-size:10.5px;font-weight:500;color:var(--dim);font-style:normal;margin-left:1px}
-.days .mf{width:13px;height:13px;margin-right:4px;flex:0 0 13px;color:var(--accent)}
+.days{font-size:14.5px;font-weight:600;color:var(--ink);flex:0 0 auto;display:inline-flex;align-items:center;margin-left:2px;letter-spacing:0}
+.days i{font-size:14.5px;font-weight:600;color:var(--ink);font-style:normal;margin-left:0}
+.days .mf{width:12px;height:12px;margin-right:3px;flex:0 0 12px;color:var(--accent)}
 .sw{width:44px;height:26px;border-radius:13px;background:var(--switch-off);position:relative;flex:0 0 44px;cursor:pointer;transition:background .18s}
 .sw.on{background:var(--accent)}
 .sw:after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;
@@ -104,6 +123,8 @@ transition:left .18s;box-shadow:0 1px 2px rgba(0,0,0,.18)}
 .mini.primary{background:var(--accent);color:#fff}
 .mini.danger{background:rgba(229,72,77,.1);color:var(--danger)}
 .card .actions .mini{padding:8px 12px}
+.card .actions.five{flex-wrap:nowrap;gap:6px}
+.card .actions.five .mini{flex:1 1 0;padding:8px 0;text-align:center;font-size:12px}
 .editor{background:var(--editor);color:var(--editor-fg);border-radius:14px;padding:13px 14px;margin-top:11px;
 font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.75;overflow:hidden;white-space:pre-wrap;word-break:break-word}
 .editor .k{color:#FF7BA0}.editor .s{color:#9AE6B4}.editor .c{color:#6B7280}
@@ -115,13 +136,18 @@ font-family:ui-monospace,Menlo,monospace;font-size:12px;line-height:1.75;overflo
 .iconrow .st{font-size:13px;color:var(--dim);margin-top:3px}
 .iconrow .val{font-size:13px;color:var(--dim);margin-left:8px;flex:0 0 auto}
 .iconrow .ch{font-size:14px;color:var(--faint);margin-left:6px;flex:0 0 auto}
-.chk{width:22px;height:22px;border-radius:50%;border:2px solid var(--switch-off);box-sizing:border-box;flex:0 0 22px;position:relative;background:#fff}
-.chk.on{background:var(--accent);border-color:var(--accent)}
-.chk.on:after{content:"";position:absolute;left:6px;top:2.5px;width:5px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
 .pickbar{display:flex;align-items:center;gap:10px;padding:0 4px 8px}
 .pickbar .hint{margin:0}
 .pickbar .mini{margin-left:auto}
 .pickbar .mini + .mini{margin-left:6px}
+/* 克隆弹层：可滚动的会话列表 + 底部固定主按钮（原来用的 .toolbar-row/.btn 根本没有样式） */
+.clonelist{max-height:44vh;overflow:auto;border-top:1px solid var(--line);margin-top:6px}
+.clonelist .row:last-child{border-bottom:0}
+.sheetfoot{display:flex;gap:10px;padding:14px 4px 2px}
+.sheetfoot button{flex:1;font:13.5px inherit;font-weight:650;padding:13px 15px;border:0;border-radius:12px;
+  background:var(--seg);color:var(--ink);cursor:pointer}
+.sheetfoot button.pri{background:var(--accent);color:#fff}
+.sheetfoot button.off{opacity:.45}
 .note{display:flex;padding:11px 14px;border-radius:10px;margin-top:12px;background:var(--warn-soft);align-items:stretch}
 .note i{width:3px;border-radius:2px;background:var(--warn);margin-right:10px;flex:0 0 3px}
 .note p{margin:0;font-size:13px;color:var(--ink);line-height:1.55}
@@ -187,8 +213,8 @@ font-size:12px;line-height:1.75;color:#E4E6EB;background:#17191F;border:0;border
 .selall{display:none;height:52px;padding:0 14px;border:0;border-radius:18px;background:#fff;color:var(--accent);
 font:13.5px inherit;font-weight:650;cursor:pointer;align-items:center;box-shadow:0 4px 16px rgba(254,44,85,.34)}
 .selall.on{display:flex}
-.fab{position:static;height:52px;padding:0 20px;border:0;border-radius:18px;background:var(--accent);
-color:#fff;font-size:13.5px;font-weight:650;display:none;align-items:center;gap:8px;cursor:pointer;box-shadow:0 4px 16px rgba(254,44,85,.34)}
+.fab{position:static;height:52px;padding:0 18px;border:0;border-radius:18px;background:var(--accent);
+color:#fff;font-size:13px;font-weight:650;display:none;align-items:center;gap:7px;cursor:pointer;box-shadow:0 4px 16px rgba(254,44,85,.34);white-space:nowrap}
 .fab.on{display:flex}
 .drawer-mask{position:absolute;inset:0;background:rgba(12,14,20,.42);opacity:0;pointer-events:none;transition:.2s;z-index:50}
 .drawer-mask.on{opacity:1;pointer-events:auto}
@@ -266,13 +292,14 @@ font-size:13px;padding:10px 16px;border-radius:12px;opacity:0;transition:.2s;z-i
     <tr><td>某一行</td><td>底部弹层：脚本 + 工具条 + 内联预览</td></tr>
     <tr><td>行尾开关</td><td>只选中不保存，右下角出现「发送 N 个」</td></tr>
     <tr><td>发送</td><td>确认框 → 清空选中 + 汇总提示</td></tr>
-    <tr><td>模板卡</td><td>编辑脚本 / 按条预览 / 更多（克隆·重命名·删除）</td></tr>
+    <tr><td>模板卡</td><td>编辑 / 预览 / 克隆 / 重命名 / 删除（等宽五钮，删除为浅红）</td></tr>
     <tr><td>设置项</td><td>开关即时生效；唤醒时间走时间选择；诊断/数据/关于都在这一页</td></tr>
   </table></div>
 </div>
 <div class="phone"><div class="frame"><div class="screen">
   <div class="statusbar"><span>9:43</span><span class="r"><span class="ic" style="font-size:11px">&#xeb2c;</span> 0.06 KB/s &nbsp;100%</span></div>
   <div class="appbar"><button class="iconbtn" onclick="toggleDrawer()"><span class="ic" id="icMenu">&#xeb94;</span></button><h1 id="title">抖音续火花cc</h1><button class="iconbtn" onclick="go('settings')"><span class="ic">&#xeb51;</span></button></div>
+  <div class="appdiv" id="appdiv"></div>
   <div class="viewport" id="view"></div>
   <div class="fabs"><button class="selall" id="selall" onclick="pickAll()"></button><button class="fab" id="fab" onclick="askSend()"></button></div>
   <div class="drawer-mask" id="dm" onclick="toggleDrawer()"></div>
@@ -293,10 +320,10 @@ clone:'\uea78',discard:'\ueae2',add:'\uea60',edit:'\uea73',trash:'\uea81',play:'
 download:'\ueac2',import:'\ueac3',lock:'\uea75',more:'\uea7c',old:'\ueb28',clippy:'\ueac0',back:'\uea9b'};
 const ic = (k, sz, col) => '<span class="ic" style="font-size:' + (sz||15) + 'px' + (col ? ';color:' + col : '') + '">' + IC[k] + '</span>';
 
-const S = {page:'home', filter:0, pfilter:0, mstat:0, picked:new Set(), enabled:D.enabled, checkAtAlarm:false,
+const S = {page:'home', filter:0, pfilter:0, mstat:-1, picked:new Set(), enabled:D.enabled, checkAtAlarm:false,
   alarm:[D.ah, D.am], drawer:false, tpls:D.tpl.slice(), sheet:null, preview:null};
 
-const TITLES = {home:'状态看板', plan:'发送管理', templates:'模板', settings:'设置', docs:'使用文档'};
+const TITLES = {home:'状态看板', templates:'模板', settings:'设置', docs:'使用文档'};
 // 无火花：没有状态文本（还没建立火花），或状态是「可点亮」这类未点亮的
 // 状态口径全部来自真机快照字段：x=state(-1 无火/1 在燃/2 待回/3 重燃中)、rn=needsRenewal、hs=hasSpark
 const NOFLAME  = r => !r.hs;
@@ -313,7 +340,8 @@ const GROUP = [
   {k:'待续',  f:r => r.rn && !r.s},
   {k:'无火花', f:r => r.x === -1},
 ];
-const matches = r => GROUP[S.filter] ? GROUP[S.filter].f(r) : true;
+const matches = r => S.mstat === 0 ? inList(r) : S.mstat === 1 ? !inList(r)
+  : (GROUP[S.filter] ? GROUP[S.filter].f(r) : true);
 const shown = () => D.rows.filter(matches);
 const hhmm = (h, m) => String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
 
@@ -336,126 +364,159 @@ function pickBox(title, items){ // items: [[label, fnName]]
     '</div><div class="row2" style="margin-top:10px"><button onclick="closeDialog()">取消</button></div>');
 }
 
+// 两行分段互斥：第二行（自动发送/不发送）选中时，第一行不保留高亮
 function segment(labels){
+  const cur = S.mstat === -1 ? S.filter : -1;
   return '<div class="segmented">' + labels.map((l,i) =>
-    '<button class="' + (S.filter === i ? 'on' : '') + '" onclick="setFilter(' + i + ')">' + l + '</button>').join('') + '</div>';
+    '<button class="' + (cur === i ? 'on' : '') + '" onclick="setFilter(' + i + ')">' + l + '</button>').join('') + '</div>';
 }
-function setFilter(i){ S.filter = i; render(); }
+function setFilter(i){ S.filter = i; S.mstat = -1; render(); }
 
+// 状态看板 = 事实 + 名单，一页七档：第一行按火花筛（全部/已燃/待燃/待续/无火花），第二行按发送状态筛（自动发送/不发送）
 function home(){
-  const autoRows = AU(), autoN = autoRows.length;   // 分母跟「自动发送」人数走
-  const total = PENDING().length + SENT().length, done = autoRows.filter(r => r.s).length, hot = PENDING().length;
+  const autoRows = AU(), autoN = autoRows.length;
+  const total = PENDING().length + SENT().length, hot = PENDING().length;
+  const inN = autoRows.filter(r => memOf(r) === 'in').length;
+  const noN = NOSEND().length;
   const next = S.alarm[0] >= 0 ? hhmm(S.alarm[0], S.alarm[1]) : '未设置';
-  // 分母：模板选中会话去重后的数量（多个模板取最大的那个集合）
-  const tplCount = S.tpls.reduce((m, t) => Math.max(m, t.m || 0), 0);
-  // 已燃：状态文案是纯数字（火苗天数）的那些
-  const lit = autoRows.filter(r => r.x === 1).length;
-  const denom = autoN || total;
+  // 分母与分子同源：名单为空时退回当前分组，否则会出现「0 / 22 已续」
+  const statRows = autoN > 0 ? autoRows : shown();
+  const denom = statRows.length;
+  const done = statRows.filter(r => r.s).length;
+  const lit = statRows.filter(r => r.x === 1).length;
+  const mview = S.mstat >= 0;   // 第二行是否在生效
+
   let h = '<div class="hero"><div class="lab"><i></i>记录时间 ' + D.today + ' 22:14</div>' +
-    '<div class="bigrow">' +
-      '<div class="big">' + done + '<small>/ ' + denom + ' 已续</small></div>' +
-      '<div class="big">' + lit + '<small>/ ' + denom + ' 已燃</small></div>' +
+    '<div class="bigrow three">' +
+      '<div class="big">' + autoN + '<small>自动发送</small></div>' +
+      '<div class="big">' + done + '<small>已续</small></div>' +
+      '<div class="big">' + lit + '<small>已燃</small></div>' +
     '</div>' +
-    '<div class="pills">' +
-      (hot ? '<span class="pill fire">' + hot + ' 个待续</span>' : '<span class="pill fire">今天都续完了</span>') +
-      '<span class="pill">下一轮 ' + next + '</span>' +
-      '<span class="pill">模板 ' + S.tpls.length + ' 个</span>' +
-    '</div></div>';
+    '<div class="hstat">' +
+      '<span>固定发送 <b>' + inN + '</b></span>' +
+      '<span>有火花 <b>' + (autoN - inN) + '</b></span>' +
+      '<span>不会续 <b>' + noN + '</b></span>' +
+    '</div>' +
+    '<div class="hint2">' + (S.enabled ? '自动续火花已开启' : '自动续火花已关闭') + ' · 下一轮 ' + next + '</div>' +
+    '</div>';
+
   h += segment(GROUP.map(g => g.k + ' ' + D.rows.filter(g.f).length));
-  const list = shown();
+  h += '<div class="segmented seg2">' +
+    '<button class="' + (S.mstat === 0 ? 'on' : '') + '" onclick="setMStat(0)">自动发送 ' + autoN + '</button>' +
+    '<button class="' + (S.mstat === 1 ? 'on' : '') + '" onclick="setMStat(1)">不发送 ' + noN + '</button>' +
+    '</div>';
+
+  let list = mview ? (S.mstat === 0 ? AU() : NOSEND()).slice() : shown();
+  if (mview) {
+    const w = r => !hasScript(r) ? 0 : memOf(r) === 'in' ? 1 : memOf(r) === 'out' ? 1 : 2;
+    list.sort((a, b) => w(a) - w(b) || b.d - a.d);
+  }
+
   if (!list.length) {
-    const msg = S.filter === 1 && hot === 0 ? ['check','今天都续完了','该续的都已经发过，明天再来']
-      : S.filter === 3 ? ['fire','没有无火花的会话','所有会话的火花都还在']
-      : ['search','这个筛选下没有人','换一个分类试试'];
+    const msg = mview
+      ? (S.mstat === 0 ? ['check','自动发送名单是空的','所有会话都被固定不发了'] : ['check','不发送名单是空的','所有人都还会自动续火花'])
+      : S.filter === 3 && hot === 0 ? ['check','今天都续完了','该续的都已经发过，明天再来']
+      : S.filter === 4 ? ['fire','没有无火花的会话','所有会话的火花都还在']
+      : ['search','这个筛选下没有人','换一个查看条件试试'];
     h += '<div class="card" style="padding:0">' + empty(msg[0], msg[1], msg[2]) + '</div>';
   } else {
-    h += '<div class="list">' + list.map(row).join('') + '</div>';
+    h += '<div class="list">' + list.map(r => mview ? memRow(r) : row(r, { acts: false })).join('') + '</div>';
   }
+
+  h += '<div class="sublabel">说明</div><div class="card"><div class="hint">' +
+    '<b>无文案</b>：没写脚本、也没挂宏的会话（模板正文不参与判定），自动发送会跳过，主页手动勾选发送同样跳过。<br>' +
+    '<b>默认</b>：只要还有火花（已燃 / 待燃 / 重燃中）就在名单里，每天自动续一次 —— 已燃只是今天续过了，明天照样续。<br>' +
+    '<b>固定发送</b>：没火花也每天发 —— 想从头点亮没火花的人、或者已燃的大火花想额外兜底，都用这个。<br>' +
+    '<b>固定不发</b>：永远不自动续，即使有火花、明天掉到待燃也不发；点「恢复默认」放回默认。<br>' +
+    '这张自动发送名单跟"今天发没发过"完全无关，也不影响主页手动勾选发送。' +
+    '</div></div>';
   return h;
 }
 
-// 统一的行渲染：状态看板与发送管理共用一套结构（头像 42px、名字+状态徽章、副标题、右侧火苗+天数）
-// o.sw === false 不画勾选开关；o.acts 在副标题下方挂按钮；o.sub 覆盖副标题；o.badge === 'right' 把名单徽章挪到右侧
+// 统一的行渲染：看板的普通行与名单行共用一套结构（头像 42px、名字+状态徽章、副标题、右侧火苗+天数）
+// o.sw === false 不画勾选开关（默认都画）；o.acts 在副标题下方挂按钮；o.sub 覆盖副标题；o.badge === 'right' 把名单徽章挪到右侧
 // 副标题只放状态类信息（无文案 / 火花异常 / 到期），天数只出现在右侧，避免一屏两处说同一件事
 const FIRE_MINI = '<svg class="mf" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
-function row(r, o){
-  o = o || {};
+// 副标题只放状态：没文案就是「无文案 · 不会发送」，否则是火花异常/到期
+function subOf(r){
   const flame = r.fl && r.fl !== String(r.d) ? r.fl : '';
   const hasBody = !!((BODY[r.id] || '')).trim();
-  const sub = o.sub != null ? o.sub
-    : [hasBody ? '' : '<span class="tag nos">无文案</span>', flame, r.ex].filter(Boolean).join(' · ');
+  return hasBody ? [flame, r.ex].filter(Boolean).join(' · ')
+    : '';
+}
+function row(r, o){
+  o = o || {};
+  const sub = o.sub != null ? o.sub : subOf(r);
   const tag = r.x === -1
     ? (r.st === '可点亮' ? '<span class="tag light">可点亮</span>' : '<span class="tag none">无火花</span>')
     : r.x === 3 ? '<span class="tag recov">重燃中</span>'
     : r.x === 2 ? (r.s ? '<span class="tag wait">待燃</span>' : '<span class="tag wait">待续</span>')
     : '<span class="tag done">已燃</span>';
   const ms = memOf(r);
-  const right = o.badge === 'right';
-  const mtag = right ? ''
-    : ms === 'in' ? '<span class="tag in">固定发送</span>'
-    : ms === 'out' ? '<span class="tag skip">固定不发</span>' : '';
-  const btag = !right ? ''
-    : ms === 'in' ? '<span class="tag in">固定发送</span>'
+  // 三态徽章固定挂在名字右边（状态徽章左边）——看板与名单同一位置、同一套，两个页面看同一个人长得一样
+  const dtag = ms === 'in' ? '<span class="tag in">固定发送</span>'
     : ms === 'out' ? '<span class="tag skip">固定不发</span>'
     : '<span class="tag def">默认</span>';
   const av = r.av ? '<img class="av" src="' + r.av + '">' : '<div class="av">' + (r.n||'?').slice(0,1) + '</div>';
-  return '<div class="row" onclick="openEditor(\'' + r.id + '\')">' + av +
-    '<div class="who"><div class="n"><span class="nm" style="' + (r.s ? 'color:var(--faint)' : '') + '">' + r.n + '</span>' + tag + mtag + '</div>' +
-    (sub ? '<div class="s">' + sub + '</div>' : '') +
-    (o.acts ? '<div class="acts">' + acts(r) + '</div>' : '') + '</div>' +
-    btag +
-    '<div class="days">' + FIRE_MINI + r.d + '<i>天</i></div>' +
-    (o.sw === false ? '' : '<div class="sw ' + (S.picked.has(r.id) ? 'on' : '') + '" onclick="event.stopPropagation();pick(\'' + r.id + '\')"></div>') +
+  const hit = o.click || ("openEditor('" + r.id + "')");
+  return '<div class="row" onclick="' + hit + '">' + av +
+    '<div class="who"><div class="n"><span class="nm">' + r.n + '</span>' +
+    '<span class="days">' + FIRE_MINI + r.d + '<i>天</i></span>' +
+    (r.g ? '<span class="tag light">群</span>' : '') + '</div>' +
+    '<div class="s">' + dtag + tag + (hasScript(r) ? '' : '<span class="tag nos">无文案</span>') + (sub ? '<span class="stxt">' + sub + '</span>' : '') + '</div>' +
+    (o.acts === false || o.actsRight ? '' : '<div class="acts">' + acts(r) + '</div>') + '</div>' +
+    (o.actsRight ? '<div class="acts acts-r">' + acts(r) + '</div>' : '') +
+    (o.chk ? '<div class="sw ' + (o.chk.on ? 'on' : '') + '" onclick="event.stopPropagation();' + o.chk.click + '"></div>'
+      : o.sw === false ? '' : '<div class="sw ' + (S.picked.has(r.id) ? 'on' : '') + '" onclick="event.stopPropagation();pick(\'' + r.id + '\')"></div>') +
     '</div>';
 }
 function pick(id){ S.picked.has(id) ? S.picked.delete(id) : S.picked.add(id); render(); }
 
 const BUILTIN = [
-  {n:'续火花表情', b:'ctx.result.push({ type: "emoji", name: "续火花" });', note:'最省事的一种：只发一个火焰表情，不打扰对方'},
-  {n:'早上好', b:'ctx.result.push("早上好，" + ctx.io.nickname + "！今天也要元气满满 ☀️");', note:'带对方称呼的纯文字问候，不发表情'}];
+  {n:'续火花表情', b:'ctx.result.push({ type: "emoji", name: "续火花" });',
+   note:'固定内容：互动表情「续火花」（火焰表情），走富消息通道'},
+  {n:'通用问候', b:'var who = ctx.io.name || "朋友";\nctx.result.push(ctx.builtin.pick([\n  who + "，今天也来续一下火花吧",\n  "火花 " + ctx.io.days + " 天啦，" + who + " 别断～"\n]));',
+   note:'两句随机：提醒续火花 + 报火花天数'}];
 function openPreviewB(i){ openPreview(BUILTIN[i].n, BUILTIN[i].b); }
 function openPreviewT(i){ openPreview(S.tpls[i].n, S.tpls[i].b); }
-function useBuiltin(i){ toast('已用「' + BUILTIN[i].n + '」新建一份模板'); }
-// 真机 firstInstallTime = 2026-11-14 13:20，这里按天差算「已经自动续火花 N 天」
-const INSTALL_DAY = '2026-11-14';
-const ACTIVE_DAYS = Math.max(1, Math.round((new Date(D.today + 'T00:00:00') - new Date(INSTALL_DAY + 'T00:00:00')) / 86400000));
-let CLONE = {i:0, sel:null, filter:0};
+function useBuiltin(i){
+  S.tpls.push({n: BUILTIN[i].n, b: BUILTIN[i].b, m: 0, v: []});
+  render(); toast('已用「' + BUILTIN[i].n + '」建了一份模板');
+}
+// 克隆弹层状态：i=模板序号，filter=分组档，sel=勾选的会话 id
+// （原来 cloneTpl() 与 CLONE 都没定义，点「克隆到会话…」直接 ReferenceError）
+let CLONE = { i: 0, filter: 0, sel: new Set() };
 function cloneTpl(i){
-  CLONE.i = i; CLONE.sel = new Set(); CLONE.filter = 0;
+  CLONE = { i: i, filter: 0, sel: new Set(D.rows.filter(r => r.tpl === i).map(r => r.id)) };
   drawClone();
 }
+// 分组与状态看板共用同一张 GROUP 表：全部 / 已燃 / 待燃 / 待续 / 无火花
 function cloneSet(){
-  return D.rows.filter(r => CLONE.filter === 0 ? true
-    : CLONE.filter === 1 ? (!r.s && !NOFLAME(r))
-    : CLONE.filter === 2 ? r.s : NOFLAME(r));
+  const g = GROUP[CLONE.filter];
+  return D.rows.filter(g ? g.f : true);
 }
 function cloneFilter(i){ CLONE.filter = i; drawClone(); }
 function drawClone(){
   const t = S.tpls[CLONE.i];
   const n = CLONE.sel.size;
   const src = cloneSet();
-  const rows = src.map(r => {
-    const on = CLONE.sel.has(r.id);
-    const av = r.av ? '<img class="av" src="' + r.av + '" style="width:34px;height:34px;flex:0 0 34px">'
-                    : '<div class="av" style="width:34px;height:34px;flex:0 0 34px;font-size:15px">' + (r.n||'?').slice(0,1) + '</div>';
-    const sub = ['火花 ' + r.d + ' 天', r.fl && r.fl !== String(r.d) ? r.fl : ''].filter(Boolean).join(' · ');
-    return '<div class="iconrow" onclick="tglClone(\'' + r.id + '\')">' + av +
-      '<div class="mid"><div class="tt" style="font-size:14.5px">' + r.n + '</div>' +
-      '<div class="st" style="font-size:12px">' + sub + '</div></div>' +
-      '<span class="chk ' + (on ? 'on' : '') + '"></span></div>';
-  }).join('');
-  const seg = ['全部 ' + D.rows.length, '待续 ' + PENDING().length, '已续 ' + SENT().length, '无火花 ' + DEAD().length]
-    .map((l, i) => '<button class="' + (CLONE.filter === i ? 'on' : '') + '" onclick="cloneFilter(' + i + ')">' + l + '</button>').join('');
-  showSheet('克隆「' + t.n + '」',
+  // 会话行复用 row()：右侧勾选由 o.chk 接管（点行不改文案，只切选中）
+  const rows = src.map(r => row(r, {
+    acts: false,
+    click: "tglClone('" + r.id + "')",
+    sub: r.tpl === CLONE.i ? '<span class="tag def">已继承</span>' : null,
+    chk: { on: CLONE.sel.has(r.id), click: "tglClone('" + r.id + "')" }
+  })).join('');
+  const seg = GROUP.map((g, i) => '<button class="' + (CLONE.filter === i ? 'on' : '') + '" onclick="cloneFilter(' + i + ')">' +
+    g.k + ' ' + D.rows.filter(g.f).length + '</button>').join('');
+  showSheet('克隆「' + t.n + '」到…',
     '<div class="segmented">' + seg + '</div>' +
-    '<div class="pickbar" style="margin-top:10px"><span class="hint">已选 ' + n + ' / ' + D.rows.length +
-      '（本组 ' + src.length + ' 个）</span>' +
+    '<div class="pickbar" style="margin-top:10px"><span class="hint">已勾 <b>' + n + '</b> 个 · 本组 ' + src.length + ' 个</span>' +
     '<button class="mini" onclick="cloneAll(true)">全选本组</button>' +
     '<button class="mini" onclick="cloneAll(false)">清空</button></div>' +
-    '<div style="max-height:46vh;overflow:auto">' + (src.length ? rows : '<div class="hint" style="padding:16px 4px">这一组没有会话</div>') + '</div>',
-    '<div class="toolbar-row" style="padding-top:14px">' +
-    '<button class="btn ghost" style="flex:1" onclick="doClone()">克隆到 ' + n + ' 个会话</button>' +
-    '</div>');
+    '<div class="clonelist">' + (src.length ? rows : '<div class="hint" style="padding:16px 4px">这一组没有会话</div>') + '</div>',
+    '<div class="sheetfoot"><button class="' + (n ? 'pri' : 'off') + '" onclick="doClone()">' +
+    (n ? '克隆到 ' + n + ' 个会话' : '先勾几个会话') + '</button></div>');
 }
 function tglClone(id){ CLONE.sel.has(id) ? CLONE.sel.delete(id) : CLONE.sel.add(id); drawClone(); }
 function cloneAll(on){
@@ -481,19 +542,20 @@ function delTpl(i){
 
 function templates(){
   let h = '<div class="sublabel">内置模板</div>';
-  h += BUILTIN.map((b,i) => '<div class="card"><h3>' + b.n + '</h3><div class="hint">' + b.note + '</div>' +
+  h += BUILTIN.map((b,i) => '<div class="card"><h3>' + b.n + '<span class="badge">内置</span></h3>' +
+    '<div class="hint">' + b.note + '</div>' +
     '<div class="editor">' + esc(b.b) + '</div>' +
-    '<div class="actions"><button class="mini primary" onclick="useBuiltin(' + i + ')">使用模板</button>' +
+    '<div class="actions"><button class="mini primary" onclick="useBuiltin(' + i + ')">用这个建模板</button>' +
     '<button class="mini" onclick="openPreviewB(' + i + ')">按条预览</button></div></div>').join('');
   h += '<div class="sublabel" style="display:flex;align-items:center">我的模板（' + S.tpls.length + '）' +
     '<button class="mini" style="margin-left:auto;font-size:12px;padding:6px 11px" onclick="openEditorNew()">' +
     '<span class="ic" style="font-size:11px">' + IC.add + '</span> 新建</button></div>';
   if (!S.tpls.length) h += '<div class="card" style="padding:0">' + empty('tpl','还没有模板','内置模板可以一键新建') + '</div>';
   h += S.tpls.map((t,i) => '<div class="card"><h3>' + t.n + '<span class="badge info">' + t.m + ' 个会话</span></h3>' +
-    '<div class="editor">' + esc(t.b) + '</div>' +
-    '<div class="actions">' +
+    '<div class="editor">' + esc(firstLines(t.b)) + '</div>' +
+    '<div class="actions five">' +
       '<button class="mini primary" onclick="openTpl(' + i + ')">编辑</button>' +
-      '<button class="mini" onclick="openPreviewT(' + i + ')">按条预览</button>' +
+      '<button class="mini" onclick="openPreviewT(' + i + ')">预览</button>' +
       '<button class="mini" onclick="cloneTpl(' + i + ')">克隆</button>' +
       '<button class="mini" onclick="renameTpl(' + i + ')">重命名</button>' +
       '<button class="mini danger" onclick="delTpl(' + i + ')">删除</button>' +
@@ -501,7 +563,14 @@ function templates(){
   return h;
 }
 
-// ── 发送管理：自动发送 / 不发送（跟今天发没发过无关）──────────────────
+// 模板卡上只露前 3 行，剩下的进编辑器看
+function firstLines(b){
+  const lines = String(b || '').split('\n');
+  return (lines.length > 3 ? lines.slice(0, 3).join('\n') + '\n…' : lines.join('\n')) || '（空模板）';
+}
+// 五个动作直接平铺在卡片上（与真机同序）：编辑 → 预览 → 克隆 → 重命名 → 删除
+
+// ── 名单口径：自动发送 / 不发送（跟今天发没发过无关）──────────────────
 // 自动发送 = 固定发送(in) ∪ 有火花(已燃/待燃/重燃中) － 固定不发(out)
 // 真机对应 SparkConfig.forcedRenew（in）/ forcedSkip（out），引擎候选式不变
 const MS = {
@@ -534,66 +603,24 @@ function acts(r){
   if (inList(r)) return (m === 'in' ? b('恢复默认', 'auto', 'ok') : '') + b('固定不发', 'out', 'no');
   return (m === 'out' ? b('恢复默认', 'auto', 'ok') : '') + b('固定发送', 'in', 'pri2');
 }
-// 发送管理的名单行：复用看板的 row()，多一排按钮、去掉勾选开关、名单徽章挪到右侧（默认 / 固定发送 / 固定不发）
+// 名单行：复用看板的 row()，多一排按钮，名单徽章挪到右侧（默认 / 固定发送 / 固定不发）
+// 名单行 = 看板行 + 行尾规则按钮；勾选开关保留（全选/发送作用的就是当前列表）
 function memRow(r){
-  return row(r, {
-    sw: false,
-    acts: true,
-    badge: 'right',
-    sub: hasScript(r) ? (inList(r) ? '' : whyNo(r)) : '<span class="tag nos">无文案</span> · 不会发送'
-  });
+  return row(r, { actsRight: true });
 }
 function pseg(labels, cur, fn){
   return '<div class="segmented">' + labels.map(function(l, i){
     return '<button class="' + (cur === i ? 'on' : '') + '" onclick="' + fn + '(' + i + ')">' + l + '</button>';
   }).join('') + '</div>';
 }
-function setMStat(i){ S.mstat = i; render(); }
-function plan(){
-  const au = AU(), no = NOSEND();
-  const inN = au.filter(r => memOf(r) === 'in').length;
-  const judgeN = au.length - inN;
-
-  let h = '';
-
-  h += '<div class="card">' +
-    '<div class="pnum">' + au.length + '<small>人会自动续火花</small></div>' +
-    '<div class="pstat">' +
-      '<span>固定发送 <b>' + inN + '</b></span>' +
-      '<span>有火花 <b>' + judgeN + '</b></span>' +
-      '<span>不会续 <b>' + no.length + '</b></span>' +
-    '</div>' +
-    '<div class="hint" style="margin-top:9px">' +
-      (S.enabled ? '自动续火花已开启' : '自动续火花已关闭') + ' · 下一轮 ' +
-      (S.alarm[0] >= 0 ? hhmm(S.alarm[0], S.alarm[1]) : '未设置定时唤醒') + '</div>' +
-    '</div>';
-
-  h += pseg(['自动发送 ' + au.length, '不发送 ' + no.length], S.mstat, 'setMStat');
-
-  const list = (S.mstat === 0 ? au : no).slice();
-  list.sort(function(a, b){
-    const w = r => !hasScript(r) ? 0 : memOf(r) === 'in' ? 1 : memOf(r) === 'out' ? 1 : 2;
-    return w(a) - w(b) || b.d - a.d;
-  });
-
-
-
-  h += '<div class="list">' + list.map(memRow).join('') + '</div>';
-
-  h += '<div class="sublabel">说明</div><div class="card"><div class="hint">' +
-    '<b>默认</b>：只要还有火花（已燃 / 待燃 / 重燃中）就在名单里，每天自动续一次 —— 火花是每天续一次才不断的，已燃只是今天续过了，明天照样续。<br>' +
-    '<b>固定发送</b>：没火花也每天发 —— 想从头点亮没火花的人、或者已燃的大火花想额外兜底，都用这个。<br>' +
-    '<b>固定不发</b>：永远不自动续，即使有火花、明天掉到待燃也不发；点「恢复默认」放回默认。<br>' +
-    '这张名单跟"今天发没发过"完全无关，也不影响主页手动勾选发送。' +
-    '</div></div>';
-  return h;
-}
-
+function setMStat(i){ S.mstat = (S.mstat === i ? -1 : i); render(); }
 function settings(){
   let h = '<div class="sublabel">发送</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
     trow('自动续火花','', S.enabled, "S.enabled=!S.enabled;render()") +
     trow('只在设定时间检查','其余时间不动', S.checkAtAlarm, "S.checkAtAlarm=!S.checkAtAlarm;render()") +
-    '</div>';
+    irow('copy','每个会话最多分几段','脚本里 ctx.commit() 几条就发几条','3 段', null) +
+    '</div>' +
+    '<div class="hint" style="margin:2px 4px 0">分段只在同一轮里生效，超过 3 段的部分会并进最后一段。</div>';
 
   h += '<div class="sublabel">定时唤醒</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
     irow('refresh','每天唤醒抖音','发完就关，需要 root', hhmm(S.alarm[0],S.alarm[1]), "pickTime()");
@@ -605,20 +632,25 @@ function settings(){
   h += '<div class="sublabel">诊断</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
     irow('graph','运行日志','宿主最近 60 行', String(parseNote().length) + ' 行', "openLog()") +
     irow('refresh','宿主心跳','抖音进程上次响应','刚刚',"openText('宿主心跳','hostAliveAt：2026-11-26 22:14:08\\nhostNoteAt：2026-11-26 22:14:08')") +
+    irow('check','安装包自校验','签名与内置指纹比对','正常',"openText('安装包自校验','内置指纹：已匹配\\n签名：release\\n上次校验：刚刚')") +
     '</div>';
 
   h += '<div class="sublabel">数据</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
     irow('copy','导出配置','把整份配置复制成 JSON','',"toast('配置 JSON 已复制到剪贴板')") +
     irow('import','导入配置','从剪贴板读回来覆盖','',"confirmBox('导入配置','会用剪贴板里的 JSON 覆盖当前全部设置，这个动作不能撤销。','覆盖',function(){toast('已导入，界面已刷新')},true)") +
+    irow('clear','表情图缓存','互动表情名字与缩略图', EMOJI_CACHE + ' 个',"confirmBox('清空表情图缓存','下次进抖音会重新抓一份。','清空',function(){EMOJI_CACHE=0;render();toast('已清空表情缓存')},true)") +
+    irow('server','配置文件','存在应用私有目录','…/files/spark_config.json',"openText('配置文件','/data/data/io.github.tiantong007.douyinspark/files/spark_config.json\\nUTF-8 JSON，导入导出就是这一份。')") +
     irow('clear','清空今日已发记录','只清「已发」标记，不动会话','清空',"confirmBox('清空今日已发记录','今天所有会话都会重新变成「待发」。','清空',function(){D.rows.forEach(function(r){r.s=false});render();toast('已清空今日记录')},true)") +
     '</div>';
 
   h += '<div class="sublabel">关于</div><div class="card" style="padding-top:4px;padding-bottom:4px">' +
-    irow('info','版本','v3.1.4（31004）','',"toast('v3.1.4（31004）')") +
+    irow('info','版本','v3.4.2（34200）','',"toast('v3.4.2（34200）')") +
+    irow('info','许可与来源','Apache-2.0','',"openText('许可与来源','Apache License 2.0\\n部分交互表情名与协议来自 yfishyon/doumcp（Apache-2.0）。')") +
     irow('link','源码','github.com/tiantong007/…douyinspark','',"toast('浏览器里打开仓库')") +
     '</div>';
   return h;
 }
+let EMOJI_CACHE = 21;
 
 function docs(){ return ''; }
 
@@ -641,20 +673,30 @@ function render(){
   $('title').textContent = TITLES[S.page];
   let h = '';
   if (S.page === 'home') h = home();
-  else if (S.page === 'plan') h = plan();
   else if (S.page === 'templates') h = templates();
   else if (S.page === 'settings') h = settings();
   else if (S.page === 'docs') h = docsPage();
   view().innerHTML = h;
+  view().scrollTop = 0;
+  syncDivider();
   renderDrawer();
   updateFab();
 }
+// 顶部分隔线：内容滚过 2px 才出现（照真机 appBarDivider）
+function syncDivider(){
+  const d = $('appdiv'), v = view();
+  if (d && v) d.classList.toggle('on', v.scrollTop > 2);
+}
+window.addEventListener('load', function(){
+  const v = view();
+  if (v) v.addEventListener('scroll', syncDivider);
+});
 
 function renderDrawer(){
-  const items = [['home','fire','状态看板',PENDING().length],['plan','select','发送管理',AU().length],['templates','tpl','模板',S.tpls.length],
+  const items = [['home','fire','状态看板',PENDING().length],['templates','tpl','模板',S.tpls.length],
 ['settings','gear','设置',0]];
   $('drawer').innerHTML =
-    '<div class="head"><b>抖音续火花cc</b><span>v3.1.4（31004）· 已经自动续火花 ' + ACTIVE_DAYS + ' 天了</span></div>' +
+    '<div class="head"><b>抖音续火花cc</b><span>v3.4.2（34200）· 装于 11-27 22:14</span></div>' +
     '<div class="dnav">' + items.map(it =>
       '<a class="' + (S.page === it[0] ? 'on' : '') + '" onclick="go(\'' + it[0] + '\')">' +
       '<span class="ic">' + IC[it[1]] + '</span>' + it[2] +
@@ -673,16 +715,16 @@ function updateFab(){
   const n = S.picked.size, f = $('fab'), sa = $('selall');
   const home = S.page === 'home';
   f.classList.toggle('on', n > 0 && home);
-  f.innerHTML = FIRE_SVG + ' 发送 ' + n + ' 个';
+  f.innerHTML = FIRE_SVG + ' 立即发送 ' + n + ' 个';
   // 全选入口：仅在主页且已选中至少一行时浮出；范围=当前分组可见且可发（排除无火花）
-  const selRows = home ? shown() : [];
+  const selRows = home ? (S.mstat === 0 ? AU() : S.mstat === 1 ? NOSEND() : shown()) : [];
   const allOn = selRows.length > 0 && selRows.every(r => S.picked.has(r.id));
   sa.classList.toggle('on', n > 0 && selRows.length > 0);
   sa.textContent = allOn ? '取消全选' : '全选';
 }
 
 function pickAll(){
-  const sel = shown();   // 本组全部行（含无火花），数量与分组标题一致
+  const sel = S.mstat === 0 ? AU() : S.mstat === 1 ? NOSEND() : shown();   // 当前列表全部行（名单视图下就是名单）
   const allOn = sel.length > 0 && sel.every(r => S.picked.has(r.id));
   sel.forEach(r => allOn ? S.picked.delete(r.id) : S.picked.add(r.id));
   if (!allOn) {
@@ -1012,9 +1054,10 @@ function openEditor(id){
   showSheet('编辑脚本',
     '<div class="hint" id="tplhint" style="margin-bottom:2px">' + tplHint(r, has) + (r.tpl !== -1 ? ' <span class="rst" onclick="resetTpl()">重置</span>' : '') + '</div>' +
     (has ? '' : '<div class="hint" style="color:#E0523B;margin-top:6px">这个会话还没有文案，发送时会被跳过。</div>') +
-    '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)"' +
+    '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)" onpaste="cleanPaste(event)"' +
       (has ? '' : ' placeholder="这个会话还没有文案\\n写点东西，比如：ctx.result.push({ type: \\"emoji\\", name: \\"续火花\\" });"') +
       '>' + esc(body) + '</textarea>' +
+    '<div class="hint" style="margin:-6px 0 2px;font-size:11.5px">ctx.result 是这一轮要发的内容；ctx.commit() 可以分成多条发。</div>' +
     '<div class="toolbar">' +
       '<button class="tbtn" onclick="pickTemplate()">' + ic('clone',12) + ' 模板</button>' +
       '<button class="tbtn fire" onclick="pickSticker()">' + ic('fire',12) + ' 表情</button>' +
@@ -1028,7 +1071,8 @@ function openEditor(id){
 function openEditorNew(){
   showSheet('新建模板',
     '<div class="field">新模板</div>' +
-    '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)">' + esc('ctx.result.push({ type: "emoji", name: "续火花" });') + '</textarea>' +
+    '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)" onpaste="cleanPaste(event)">' + esc('ctx.result.push({ type: "emoji", name: "续火花" });') + '</textarea>' +
+    '<div class="hint" style="margin:-6px 0 2px;font-size:11.5px">ctx.result 是这一轮要发的内容；ctx.commit() 可以分成多条发。</div>' +
     '<div class="toolbar">' +
       '<button class="tbtn fire" onclick="pickSticker()">' + ic('fire',12) + ' 表情</button>' +
       '<button class="tbtn" onclick="pickVar()">' + ic('vars',12) + ' 变量</button>' +
@@ -1041,7 +1085,8 @@ function openTpl(i){
   const t = S.tpls[i];
   showSheet('编辑模板',
     '<div class="field">' + t.n + '</div>' +
-    '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)">' + esc(t.b) + '</textarea>' +
+    '<textarea class="script" id="ed" spellcheck="false" oninput="cntEd(this)" onpaste="cleanPaste(event)">' + esc(t.b) + '</textarea>' +
+    '<div class="hint" style="margin:-6px 0 2px;font-size:11.5px">ctx.result 是这一轮要发的内容；ctx.commit() 可以分成多条发。</div>' +
     '<div class="toolbar">' +
       '<button class="tbtn fire" onclick="pickSticker()">' + ic('fire',12) + ' 表情</button>' +
       '<button class="tbtn" onclick="pickVar()">' + ic('vars',12) + ' 变量</button>' +
@@ -1134,8 +1179,36 @@ function pickTime(){
     ['22:30','function(){S.alarm=[22,30];render();toast(\'已设为 22:30\')}']]);
 }
 
+function copyDoc(){
+  const el = document.querySelector('.doc');
+  if (!el) return;
+  try { navigator.clipboard.writeText(el.innerText); toast('已复制全文'); }
+  catch (e) { toast('复制失败，长按选择文字'); }
+}
+function shareDoc(){
+  const el = document.querySelector('.doc');
+  const text = el ? el.innerText : '';
+  if (navigator.share) { navigator.share({title:'抖音续火花cc · 使用说明', text: text}).catch(function(){}); }
+  else { toast('这个环境不支持系统分享'); }
+}
+// 粘贴清理：零宽字符、花引号、Markdown 围栏（与真机 normalize 一致）
+function cleanPaste(ev){
+  const dt = ev.clipboardData || window.clipboardData;
+  if (!dt) return;
+  let t = dt.getData('text');
+  if (!t) return;
+  ev.preventDefault();
+  const clean = t.replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"')
+    .replace(/^```[a-zA-Z]*\n?/, '').replace(/\n?```\s*$/, '');
+  insertAtCursor(clean);
+}
+
 function docsPage(){
   return '<div class="doc">' +
+    '<div class="actions" style="margin:0 0 10px">' +
+      '<button class="mini" onclick="copyDoc()">复制全文</button>' +
+      '<button class="mini" onclick="shareDoc()">分享</button></div>' +
     '<h2>续火花 · 使用说明</h2>' +
     '<div class="hint">真机里这一页是 WebView 渲染安装包内的 <code>assets/docs/manual.md</code>，和仓库 README 是同一份内容。</div>' +
 
@@ -1149,9 +1222,10 @@ function docsPage(){
     '<p>默认在设定时间检查一次，把「今天还没续、且有火花」的会话挑出来，逐个按模板脚本发送。发完会在会话里留一条「今日已发」的标记，同一天不会重复发。</p>' +
     '<p>失败会重试一次；连续多天找不到的会话会被自动隐藏，不会再占用列表。</p>' +
 
-    '<h3>3　首页四个分类</h3>' +
-    '<p><b>全部</b>：所有可见会话。<b>待续</b>：有火花、今天还没发。<b>已续</b>：今天已经发过。<b>无火花</b>：对方和你还没建立火花，或者火花已断（状态显示「可点亮」），这一类不需要续。</p>' +
-    '<p>点一行进去改这个会话的脚本；行尾的开关只是「选中」，选够了右下角才会出现「发送 N 个」，点它才会真正发。</p>' +
+    '<h3>3　状态看板的两行分段</h3>' +
+    '<p><b>第一行（火花状态）</b>：全部 / 已燃 / 待燃 / 待续 / 无火花。已燃 = 今天已经互动过；待燃 = 今天发过了、等对方回；待续 = 今天还没发、抖音说该续；无火花 = 两边还没有火花，发也燃不起来。</p>' +
+    '<p><b>第二行（发送名单）</b>：自动发送 / 不发送。这一行跟「今天发没发过」无关，只回答总开关打开后谁会被自动续 —— 有火花的都在名单里，固定发送的没火花也发，固定不发的永远不发。两行互斥，点哪行哪行生效。</p>' +
+    '<p>点一行进去改这个会话的脚本；看板行尾的开关只是「选中」，选够了右下角才会出现「立即发送 N 个」，点它才会真正发。名单行的行尾换成「固定发送 / 固定不发 / 恢复默认」三个规则按钮。</p>' +
 
     '<h3>4　脚本怎么写</h3>' +
     '<p>脚本是一段 JS，能用的就三件事：往结果里放东西、分段、发表情。</p>' +
@@ -1162,7 +1236,7 @@ function docsPage(){
     '<p>变量在发送那一刻取值，写法是带命名空间的完整路径：</p>' +
     '<ul><li><code>ctx.builtin.date</code> / <code>time</code> / <code>weekday</code> / <code>timestamp</code> —— 时间。</li>' +
     '<li><code>ctx.io.nickname</code> / <code>remark</code> / <code>name</code> / <code>days</code> / <code>stateText</code> / <code>peerUid</code> / <code>id</code> —— 这个会话的对方信息，<code>ctx.io.name</code> 是备注优先的显示名。</li>' +
-    '<li><code>ctx.template.名字</code> —— 你自己在模板或会话里加的变量。</li></ul>' +
+    '<li><code>ctx.template.vars["名字"]</code> —— 你自己在模板里定义的变量，用引号包住名字。</li></ul>' +
     '<p>模板里写的变量所有会话共用，会话里写的只对那一个生效，同名时会话优先。</p>' +
 
     '<h3>6　出问题时</h3>' +
@@ -1181,7 +1255,7 @@ document.getElementById('spec').innerHTML = [
   ['列表行','pad 12/15，gap 12','头像 42 圆，底部 1px 线'],
   ['头像','42dp','url 缺失时首字 + 灰底'],
   ['名字','14.5sp / 600','已续时降到 #B9BEC8'],
-  ['标签','10.5sp，pad 2/7，r6','已燃绿 / 待燃橙 / 无火花灰 / 群蓝'],
+  ['标签','10.5sp，pad 0/7，h19，r6','已燃绿#12B886 / 待燃·待续橙#F59E0B / 重燃中#B45309 / 可点亮·群蓝#3B82F6 / 无火花灰#A0A5B0'],
   ['天数','15sp / 700 + 「天」10.5',''],
   ['开关','44×26，钮 20','关 #DDE0E6，开 #FE2C55'],
   ['卡片','r18 pad 15/16','阴影 0 1px 3px rgba(0,0,0,.045)'],

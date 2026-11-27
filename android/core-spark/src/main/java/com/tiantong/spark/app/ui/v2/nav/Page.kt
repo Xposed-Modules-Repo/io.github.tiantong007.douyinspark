@@ -13,6 +13,14 @@ enum class Page(val label: String, val glyph: String) {
     DOCS("使用文档", Tokens.Icon.BOOK),
     ;
 
+    /**
+     * 抽屉里显示的名字。
+     *
+     * 首页在抽屉里叫「状态看板」——抽屉其余几项都是功能名（模板 / 设置 / 使用文档），
+     * 只有首页原本写产品名，读起来不齐；产品名留在标题栏和抽屉头部。
+     */
+    val drawerLabel: String get() = if (this == HOME) "状态看板" else label
+
     companion object {
         /** 抽屉主列表里的页面（文档页走独立入口，不在这里）。 */
         val main: List<Page> get() = entries.filter { it != DOCS }

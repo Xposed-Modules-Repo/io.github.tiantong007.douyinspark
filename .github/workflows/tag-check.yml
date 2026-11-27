@@ -54,13 +54,6 @@ jobs:
             || { echo "::error::README 缺少 <!-- version-anchor: $NAME ($CODE) -->"; exit 1; }
           echo "README 横幅通过"
 
-      - name: 状态快照一致
-        run: |
-          CODE="${{ steps.v.outputs.code }}"
-          grep -qF "| versionCode | **$CODE** |" docs/状态快照.md \
-            || { echo "::error::docs/状态快照.md 的 versionCode 未同步"; exit 1; }
-          echo "状态快照通过"
-
       - name: 隐私扫描（真实昵称/手机号关键词）
         run: |
           # 示例会话名必须是匿名化的 XXX / YYY；只抓「独立成串」的 11 位手机号

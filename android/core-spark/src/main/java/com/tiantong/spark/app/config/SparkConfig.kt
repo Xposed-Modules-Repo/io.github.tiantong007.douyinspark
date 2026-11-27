@@ -112,21 +112,13 @@ data class SparkConfig(
             }
         val seen = fresh.map { it.conversationId }.toSet()
         val kept = mutableListOf<ConversationSnapshot>()
-        val expired = mutableSetOf<String>()
         snapshots.forEach { old ->
             if (old.conversationId in seen) return@forEach
-            if (now - old.updatedAt > SNAPSHOT_GRACE_MS) {
-                expired += old.conversationId
-            } else {
-                kept += old.copy(missCount = old.missCount + 1)
-            }
+            if (now - old.updatedAt <= SNAPSHOT_GRACE_MS) kept += old.copy(missCount = old.missCount + 1)
         }
-        // 快照删除后，手动归属里指向它的 id 一起清掉（否则「已选目标」会永远多一个幽灵）
-        return copy(
-            snapshots = merged + kept,
-            forcedRenew = forcedRenew - expired,
-            forcedSkip = forcedSkip - expired,
-        )
+        // 快照过期后**不再**顺手清掉手动归属：清掉等于用户设过的「固定发送」无声消失。
+        // 指向已消失会话的 id 留在名单里，界面以「已失联」灰行摆出来，由用户自己恢复默认。
+        return copy(snapshots = merged + kept)
     }
 
     /**

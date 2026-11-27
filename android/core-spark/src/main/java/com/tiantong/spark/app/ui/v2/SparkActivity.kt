@@ -263,7 +263,7 @@ class SparkActivity : Activity(), Shell {
             setPadding(dp(18), dp(12), dp(20), dp(12))
             gravity = Gravity.CENTER_VERTICAL
             addView(icon(Tokens.Icon.FIRE, 17f, -1), lp(24, WRAP))
-            addView(text("发送", Tokens.T_BODY, -1, bold = true), lp(WRAP, WRAP, left = 4))
+            addView(text("立即发送", Tokens.T_BODY, -1, bold = true), lp(WRAP, WRAP, left = 4))
             visibility = View.GONE
             setOnClickListener { askSend() }
         }
@@ -275,7 +275,7 @@ class SparkActivity : Activity(), Shell {
             background = whitePill()
             visibility = View.GONE
             setOnClickListener {
-                val groupIds = state.shown().map { it.conversationId }
+                val groupIds = state.listRows().map { it.conversationId }
                 val wasAll = state.groupAllPicked()
                 state.togglePickGroup()
                 val skip = state.noBodyCount(groupIds)
@@ -352,7 +352,7 @@ class SparkActivity : Activity(), Shell {
                 lp(20, WRAP).also { it.rightMargin = dp(11) },
             )
             addView(
-                text(page?.label ?: "使用文档", 14f, if (active) Tokens.ACCENT else Tokens.INK, bold = active),
+                text(page?.drawerLabel ?: "使用文档", 14f, if (active) Tokens.ACCENT else Tokens.INK, bold = active),
                 lp(0, WRAP, 1f),
             )
             val count = page?.let { countOf(it) } ?: 0
@@ -454,10 +454,16 @@ class SparkActivity : Activity(), Shell {
     }
 
     override fun rebuild() {
+        // 改一行归属就整页重建；不记滚动位置的话人会被弹回顶部，等于看不见刚改的那一行。
+        val keepY = (content.getChildAt(0) as? android.widget.ScrollView)?.scrollY ?: 0
         state.reload()
         pages[current]?.refresh()
         renderDrawer()
         updateFab()
+        if (keepY > 0) {
+            val sv = content.getChildAt(0) as? android.widget.ScrollView
+            sv?.post { sv.scrollTo(0, keepY) }
+        }
     }
 
     override fun openEditor(conversationId: String?, templateId: String?) {
@@ -486,7 +492,8 @@ class SparkActivity : Activity(), Shell {
     }
 
     private fun askSend() {
-        val ids = state.picked.toList()
+        // 只发当前列表里勾上的人：切过分组就自动清空，这里是第二道保险。
+        val ids = state.pickedInView()
         if (ids.isEmpty()) return
         val names = ids.mapNotNull { id -> state.config.snapshot(id)?.displayName }
         val preview = if (names.isEmpty()) "" else "\n\n" + names.take(8).joinToString("、") +
@@ -509,10 +516,10 @@ class SparkActivity : Activity(), Shell {
         val count = state.picked.size
         fab.visibility = if (count > 0) View.VISIBLE else View.GONE
         (fab as? ViewGroup)?.let { group ->
-            (group.getChildAt(1) as? android.widget.TextView)?.text = "发送 $count 个"
+            (group.getChildAt(1) as? android.widget.TextView)?.text = "立即发送 $count 个"
         }
         // 全选入口：主页 + 已有勾选 + 当前分组有会话（含无火花），数量与分组标题一致。
-        val showSelAll = count > 0 && current == Page.HOME && state.shown().isNotEmpty()
+        val showSelAll = count > 0 && current == Page.HOME && state.listRows().isNotEmpty()
         selAll.visibility = if (showSelAll) View.VISIBLE else View.GONE
         if (showSelAll) {
             (selAll as? android.widget.TextView)?.text =

@@ -3,6 +3,7 @@ package com.tiantong.spark.app.ui.v2.screen
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.TextView
 import com.tiantong.spark.app.config.BuiltinTemplates
 import com.tiantong.spark.app.config.model.TemplateGroup
 import com.tiantong.spark.app.ui.v2.comp.MATCH
@@ -15,7 +16,6 @@ import com.tiantong.spark.app.ui.v2.comp.emptyState
 import com.tiantong.spark.app.ui.v2.comp.icon
 import com.tiantong.spark.app.ui.v2.comp.lp
 import com.tiantong.spark.app.ui.v2.comp.mono
-import com.tiantong.spark.app.ui.v2.comp.pick
 import com.tiantong.spark.app.ui.v2.comp.row
 import com.tiantong.spark.app.ui.v2.comp.shape
 import com.tiantong.spark.app.ui.v2.comp.sectionLabel
@@ -145,40 +145,47 @@ class TemplatesScreen(private val shell: Shell) : PageView {
             ctx.lp(MATCH, WRAP, top = 8),
         )
 
+        // 五个动作平铺：编辑 → 预览 → 克隆 → 重命名 → 删除（破坏性放最后）。
+        // 等宽，11.5sp 小字；删除用 danger 浅底，其余走中性灰或强调色。
         card.addView(
             ctx.row().apply {
-                gravity = Gravity.END
-                addView(ctx.miniButton("编辑脚本", primary = true) {
+                addView(cardAction("编辑", Tokens.ACCENT, 0x14FE2C55) {
                     shell.openEditor(templateId = group.id)
-                }, ctx.lp(WRAP, WRAP))
-                addView(ctx.miniButton("按条预览") {
+                }, ctx.lp(0, WRAP, 1f))
+                addView(cardAction("预览", Tokens.INK_DIM, Tokens.SEG_BG) {
                     PreviewSheet.open(shell.activity,
                         group.name.ifBlank { "未命名模板" },
                         config.composeProgram(group.body, config.macrosForTemplate(group.id)),
                         group.id,
                     )
-                }, ctx.lp(WRAP, WRAP, left = 4))
-                addView(ctx.miniButton("更多") {
-                    more(group)
-                }, ctx.lp(WRAP, WRAP, left = 4))
+                }, ctx.lp(0, WRAP, 1f, left = 5))
+                addView(cardAction("克隆", Tokens.INK_DIM, Tokens.SEG_BG) {
+                    cloneTo(group)
+                }, ctx.lp(0, WRAP, 1f, left = 5))
+                addView(cardAction("重命名", Tokens.INK_DIM, Tokens.SEG_BG) {
+                    rename(group)
+                }, ctx.lp(0, WRAP, 1f, left = 5))
+                addView(cardAction("删除", Tokens.DANGER, 0x12E5484D) {
+                    remove(group)
+                }, ctx.lp(0, WRAP, 1f, left = 5))
             },
-            ctx.lp(MATCH, WRAP, top = 4),
+            ctx.lp(MATCH, WRAP, top = 8),
         )
         return card
     }
 
-    private fun more(group: TemplateGroup) {
-        shell.context.pick(
-            group.name.ifBlank { "未命名模板" },
-            listOf("克隆到会话…", "重命名", "删除模板"),
-        ) { which ->
-            when (which) {
-                0 -> cloneTo(group)
-                1 -> rename(group)
-                2 -> remove(group)
+    /** 模板卡底部的等宽小按钮：文字居中、单行，强调/危险色带同色描边。 */
+    private fun cardAction(label: String, color: Int, tint: Int, onClick: () -> Unit): TextView =
+        ctx.text(label, 11.5f, color, bold = true).apply {
+            gravity = Gravity.CENTER
+            setPadding(ctx.dp(2), ctx.dp(8), ctx.dp(2), ctx.dp(8))
+            background = ctx.shape(tint, 10).apply {
+                if (tint != Tokens.SEG_BG) setStroke(ctx.dp(1), (color and 0x00FFFFFF) or 0x42000000)
             }
+            maxLines = 1
+            isClickable = true
+            setOnClickListener { onClick() }
         }
-    }
 
     private fun createTemplate() {
         shell.openEditor(templateId = "")
@@ -244,43 +251,143 @@ class TemplatesScreen(private val shell: Shell) : PageView {
         }
     }
 
+    /**
+     * 克隆到会话：多选。
+     *
+     * 原来这里是单选的 `pick()`，一个模板想铺给一批人得点十几次；改成勾选列表 +
+     * 全选 / 清空，一次写完。已经继承这个模板的会话预勾上，等于「再确认一遍」。
+     */
     private fun cloneTo(group: TemplateGroup) {
         val config = shell.state.config
         val targets = config.snapshots.filter { !it.isHidden }
         if (targets.isEmpty()) {
-            shell.context.tip("还没有会话快照，先进一次抖音")
+            ctx.tip("还没有会话快照，先进一次抖音")
             return
         }
-        val labels = targets.map { it.displayName }
-        shell.context.pick("继承「${group.name}」的会话", labels) { which ->
-            val target = targets[which]
-            shell.state.update { current ->
-                val existing = current.conversation(target.conversationId)
-                val next = if (existing == null) {
-                    com.tiantong.spark.app.config.model.ConversationTemplate(
-                        conversationId = target.conversationId,
-                        inheritFrom = group.id,
-                        body = group.body,
-                        parentHashAtSync = group.bodyHash,
-                        autoSync = true,
-                        updatedAt = System.currentTimeMillis(),
-                    )
-                } else {
-                    existing.copy(
-                        inheritFrom = group.id,
-                        body = group.body,
-                        parentHashAtSync = group.bodyHash,
-                        updatedAt = System.currentTimeMillis(),
+
+        val picked = LinkedHashSet<String>()
+        val boxes = HashMap<String, android.widget.CheckBox>()
+        val body = ctx.column()
+
+        val count = ctx.text("已勾 0 个", Tokens.T_SUB, Tokens.INK_DIM)
+        var positive: android.widget.Button? = null
+        fun syncCount() {
+            count.text = "已勾 ${picked.size} 个 · 本组 ${targets.size} 个"
+            // 主按钮跟着勾选数变，0 个时压暗——避免出现「克隆到 0 个会话」这种可点的空操作
+            positive?.let {
+                it.text = if (picked.isEmpty()) "先勾几个会话" else "克隆到 ${picked.size} 个会话"
+                it.alpha = if (picked.isEmpty()) 0.45f else 1f
+            }
+        }
+
+        val head = ctx.row().apply { gravity = Gravity.CENTER_VERTICAL }
+        head.addView(count, ctx.lp(WRAP, WRAP, weight = 1f))
+        head.addView(
+            ctx.text("全选", 12f, Tokens.ACCENT, bold = true).apply {
+                setPadding(ctx.dp(8), ctx.dp(4), ctx.dp(8), ctx.dp(4))
+                setOnClickListener {
+                    targets.forEach { picked.add(it.conversationId) }
+                    boxes.values.forEach { it.isChecked = true }
+                    syncCount()
+                }
+            },
+        )
+        head.addView(
+            ctx.text("清空", 12f, Tokens.INK_DIM, bold = true).apply {
+                setPadding(ctx.dp(8), ctx.dp(4), ctx.dp(8), ctx.dp(4))
+                setOnClickListener {
+                    picked.clear()
+                    boxes.values.forEach { it.isChecked = false }
+                    syncCount()
+                }
+            },
+        )
+        body.addView(head, ctx.lp(MATCH, WRAP, left = 14, right = 14, bottom = 4))
+
+        targets.forEach { target ->
+            val inherited = config.conversation(target.conversationId)?.inheritFrom == group.id
+            val box = android.widget.CheckBox(ctx).apply {
+                isChecked = inherited
+                setOnCheckedChangeListener { _, checked ->
+                    if (checked) picked.add(target.conversationId)
+                    else picked.remove(target.conversationId)
+                    syncCount()
+                }
+            }
+            if (inherited) picked.add(target.conversationId)
+            boxes[target.conversationId] = box
+            val line = ctx.row().apply {
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(ctx.dp(14), ctx.dp(5), ctx.dp(14), ctx.dp(5))
+                addView(box, ctx.lp(WRAP, WRAP))
+                addView(
+                    ctx.text(target.displayName, 14f, Tokens.INK),
+                    ctx.lp(WRAP, WRAP, left = 2, weight = 1f),
+                )
+                if (inherited) {
+                    addView(
+                        ctx.text("已继承", 11f, Tokens.INK_DIM),
+                        ctx.lp(WRAP, WRAP),
                     )
                 }
-                current.copy(
-                    conversations = current.conversations.filterNot {
-                        it.conversationId == target.conversationId
-                    } + next,
-                )
+                setOnClickListener { box.isChecked = !box.isChecked }
             }
-            shell.context.tip("${target.displayName} 已继承")
-            shell.rebuild()
+            body.addView(line, ctx.lp(MATCH, WRAP))
         }
+        syncCount()
+
+        val scroller = android.widget.ScrollView(ctx).apply {
+            addView(body, LinearLayout.LayoutParams(MATCH, WRAP))
+        }
+
+        val dialog = android.app.AlertDialog.Builder(ctx)
+            .setTitle("克隆「${group.name}」到…")
+            .setView(scroller)
+            .setPositiveButton("先勾几个会话", null)
+            .setNegativeButton("取消", null)
+            .create()
+
+        dialog.setOnShowListener {
+            positive = dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+            syncCount()
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if (picked.isEmpty()) {
+                    ctx.tip("先勾几个会话")
+                    return@setOnClickListener
+                }
+                val stamp = System.currentTimeMillis()
+                shell.state.update { current ->
+                    var next = current
+                    picked.forEach { id ->
+                        val old = current.conversation(id)
+                        val item = if (old == null) {
+                            com.tiantong.spark.app.config.model.ConversationTemplate(
+                                conversationId = id,
+                                inheritFrom = group.id,
+                                body = group.body,
+                                parentHashAtSync = group.bodyHash,
+                                autoSync = true,
+                                updatedAt = stamp,
+                            )
+                        } else {
+                            old.copy(
+                                inheritFrom = group.id,
+                                body = group.body,
+                                parentHashAtSync = group.bodyHash,
+                                updatedAt = stamp,
+                            )
+                        }
+                        next = next.copy(
+                            conversations = next.conversations.filterNot { it.conversationId == id } + item,
+                        )
+                    }
+                    next
+                }
+                ctx.tip("已克隆到 ${picked.size} 个会话")
+                dialog.dismiss()
+                shell.rebuild()
+            }
+        }
+        dialog.show()
     }
 }

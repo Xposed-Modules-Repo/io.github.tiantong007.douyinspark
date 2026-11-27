@@ -48,27 +48,32 @@ object EditorSheet {
     private const val DEFAULT_BODY = "ctx.result.push({ type: \"emoji\", name: \"续火花\" });"
 
     /**
-     * 引擎内置的变量，与 [com.tiantong.spark.app.script.PreviewData] 注入的一致。
-     * 分组 + 说明，与原型 pickVar 的 VARLIST 对齐；插入仍是引擎认的 \${ctx.template.vars["..."]}。
+     * 引擎内置的变量，与 [com.tiantong.spark.app.script.SparkScriptEngine.VARIABLES] 注入的一致。
+     *
+     * 三元组 = 变量名 / **插入时要写的完整路径** / 说明。
+     * 路径必须写对：时间类挂在 `ctx.builtin.*`，对方与会话类挂在 `ctx.io.*`
+     * （见 `SparkScriptEngine.kt` 的 `BUILTIN_OBJ` / `IO_OBJ` 与 `IO_KEYS`）；
+     * 会话 UUID 的键名是 `id`，不是 `conversationId`。
+     * 模板自定义变量是另一套，走 `ctx.template.vars["名"]`，见下方「模板变量」分组。
      */
     private val VAR_GROUPS = listOf(
         "时间" to listOf(
-            "date" to "今天日期，如 2026-11-26",
-            "time" to "当前时间，如 22:14",
-            "weekday" to "星期几",
-            "timestamp" to "Unix 时间戳（秒）",
+            Triple("date", "\${ctx.builtin.date}", "今天日期，如 2026-11-26"),
+            Triple("time", "\${ctx.builtin.time}", "当前时间，如 22:14"),
+            Triple("weekday", "\${ctx.builtin.weekday}", "星期几"),
+            Triple("timestamp", "\${ctx.builtin.timestamp}", "Unix 时间戳（毫秒）"),
         ),
         "对方" to listOf(
-            "nickname" to "对方昵称",
-            "remark" to "对方备注名",
-            "name" to "显示名（备注优先）",
-            "days" to "火花天数",
+            Triple("nickname", "\${ctx.io.nickname}", "对方昵称"),
+            Triple("remark", "\${ctx.io.remark}", "对方备注名"),
+            Triple("name", "\${ctx.io.name}", "显示名（备注优先）"),
+            Triple("days", "\${ctx.io.days}", "火花天数"),
         ),
         "会话" to listOf(
-            "state" to "火花状态数字（1 已燃 / 2 待燃 / 3 重燃中）",
-            "stateText" to "状态文字，如 待续 / 已燃",
-            "peerUid" to "对方 UID",
-            "conversationId" to "会话 ID",
+            Triple("state", "\${ctx.io.state}", "火花状态数字（1 已燃 / 2 待燃 / 3 重燃中）"),
+            Triple("stateText", "\${ctx.io.stateText}", "状态文字，如 待续 / 已燃"),
+            Triple("peerUid", "\${ctx.io.peerUid}", "对方 UID"),
+            Triple("id", "\${ctx.io.id}", "会话 ID（UUID）"),
         ),
     )
 
@@ -162,8 +167,9 @@ object EditorSheet {
             editorRef = editor
             bodyView.addView(editor, context.lp(MATCH, WRAP, top = 12))
 
-            // 与原型一致：没写脚本的会话发送时会被跳过，提前说一声
-            if (conversationId != null && body.isBlank()) {
+            // 与原型一致：没写脚本的会话发送时会被跳过，提前说一声。
+            // 判口径必须跟宿主 scriptFor 一致（会话 body + 宏），只看 body 会把「只挂宏」的会话误报成没有文案。
+            if (conversationId != null && !shell.state.hasScript(conversationId)) {
                 bodyView.addView(context.note("这个会话还没有文案，发送时会被跳过。"), context.lp(MATCH, WRAP))
             }
 
@@ -345,20 +351,21 @@ object EditorSheet {
         container.orientation = LinearLayout.VERTICAL
         container.setPadding(ctx.dp(20), ctx.dp(8), ctx.dp(20), ctx.dp(12))
 
-        fun section(title: String, vars: List<Pair<String, String>>) {
+        fun section(title: String, vars: List<Triple<String, String, String>>) {
             if (vars.isEmpty()) return
             container.addView(
                 ctx.text(title, Tokens.T_TINY, Tokens.INK_DIM, bold = true),
                 ctx.lp(MATCH, WRAP, top = 12),
             )
-            vars.forEach { (name, desc) ->
+            vars.forEach { (name, path, desc) ->
                 container.addView(
                     ctx.row().apply {
                         setPadding(0, ctx.dp(8), 0, ctx.dp(8))
+                        gravity = Gravity.CENTER_VERTICAL
                         addView(ctx.text(name, Tokens.T_BODY, Tokens.ACCENT, bold = true), ctx.lp(WRAP, WRAP))
                         addView(ctx.text(desc, Tokens.T_TINY, Tokens.INK_FAINT), ctx.lp(0, WRAP, 1f, left = 10))
                         setOnClickListener {
-                            insert(editor, "\${ctx.template.vars[\"$name\"]}")
+                            insert(editor, path)
                             dialog?.dismiss()
                         }
                     },
@@ -367,14 +374,21 @@ object EditorSheet {
             }
         }
 
+        /** 模板自定义变量：名字自己起，路径固定是 `ctx.template.vars["名"]`。 */
+        fun tplVar(name: String, desc: String): Triple<String, String, String> =
+            Triple(name, "\${ctx.template.vars[\"$name\"]}", desc)
+
         VAR_GROUPS.forEach { (title, vars) -> section(title, vars) }
 
         if (conversationId != null) {
             val conversation = config.conversation(conversationId)
-            section("这个会话的变量", conversation?.variables?.map { it.name to "模板变量" } ?: emptyList())
+            section(
+                "这个会话的变量",
+                conversation?.variables?.map { tplVar(it.name, it.expr.ifBlank { "（空）" }) } ?: emptyList(),
+            )
             section(
                 "继承模板的变量",
-                conversation?.inheritFrom?.let { config.group(it)?.variables?.map { v -> v.name } }?.map { it to "模板变量" }
+                conversation?.inheritFrom?.let { config.group(it)?.variables?.map { v -> tplVar(v.name, "来自模板") } }
                     ?: emptyList(),
             )
         }
@@ -382,7 +396,7 @@ object EditorSheet {
         if (templateId != null) {
             section(
                 "这个模板的变量",
-                config.group(templateId)?.variables?.map { it.name to it.expr.ifBlank { "（空）" } } ?: emptyList(),
+                config.group(templateId)?.variables?.map { tplVar(it.name, it.expr.ifBlank { "（空）" }) } ?: emptyList(),
             )
         }
 

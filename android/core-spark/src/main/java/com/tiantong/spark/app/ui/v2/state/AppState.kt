@@ -19,6 +19,9 @@ class AppState(context: Context) {
     private val app = context.applicationContext
     private val dayFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
+    /** 界面偏好（分段位置）不进 SparkConfig：那是可导出可分享的配置，视图状态不该跟着跑。 */
+    private val prefs = app.getSharedPreferences("spark_ui", Context.MODE_PRIVATE)
+
     var config: SparkConfig = SparkConfig()
         private set
 
@@ -28,9 +31,47 @@ class AppState(context: Context) {
      * 「已燃」= 今天有互动、火花已经点燃；「待燃」= 今天发过了但对方还没回，等他回就燃；
      * 「待续」= 今天还没发、抖音说该续；「无火花」= 两边根本没有火花，发也燃不起来。
      */
-    var filter: Int = 0
+    private var _filter: Int = prefs.getInt("filter", 0).coerceIn(0, 4)
+
+    var filter: Int
+        get() = _filter
+        set(value) {
+            val next = value.coerceIn(0, 4)
+            if (next == _filter) return
+            _filter = next
+            prefs.edit().putInt("filter", next).apply()
+            // 列表换了，勾选必须跟着失效：在哪一组勾的全选，只在那一组里生效。
+            picked.clear()
+        }
+
+    /**
+     * 首页第二行分段（发送名单）：-1 不生效 / 0 自动发送 / 1 不发送。
+     *
+     * 与 [filter] 互斥 —— 任何一行被点选，另一行的选中态就清空，
+     * 这样「列表里这些人是谁筛出来的」永远只有一个答案。
+     */
+    private var _mstat: Int = prefs.getInt("mstat", -1).coerceIn(-1, 1)
+
+    var mstat: Int
+        get() = _mstat
+        set(value) {
+            val next = value.coerceIn(-1, 1)
+            if (next == _mstat) return
+            _mstat = next
+            prefs.edit().putInt("mstat", next).apply()
+            picked.clear()
+        }
 
     var query: String = ""
+        set(value) {
+            val next = value.trim()
+            if (next == field) return
+            field = next
+            picked.clear()
+        }
+
+    /** 刚刚被改过归属的会话 id：重建列表时把那一行标一下，否则人一移走就找不到。 */
+    var touchedId: String? = null
 
     /** 首页勾选的会话 id（跨刷新保留，已消失的自动剔除）。 */
     val picked: MutableSet<String> = linkedSetOf()
@@ -79,8 +120,8 @@ class AppState(context: Context) {
     fun pending(): List<ConversationSnapshot> =
         renewable().filter { !sentToday(it.conversationId) && needsRenew(it) }
 
-    fun needsRenew(snapshot: ConversationSnapshot): Boolean =
-        config.needsRenewal(snapshot) || snapshot.conversationId in config.forcedRenew
+    /** 三态优先级已经写在 [SparkConfig.needsRenewal] 里（固定发送 > 固定不发 > 抖音判定）。 */
+    fun needsRenew(snapshot: ConversationSnapshot): Boolean = config.needsRenewal(snapshot)
 
     /** 该续且今天已经发过。 */
     fun sentList(): List<ConversationSnapshot> =
@@ -131,10 +172,11 @@ class AppState(context: Context) {
         }
     }
 
-    /** 勾选且还没发的会话 —— 首页「发送」按钮的作用对象。 */
-    fun targets(): List<String> =
-        pending().filter { it.conversationId in picked && !sentToday(it.conversationId) }
-            .map { it.conversationId }
+    /** 勾选且仍在当前列表里的会话 —— 首页「发送」按钮的作用对象。 */
+    fun pickedInView(): List<String> {
+        val view = listRows().mapTo(HashSet()) { it.conversationId }
+        return picked.filter { it in view }
+    }
 
     fun isPicked(id: String): Boolean = id in picked
 
@@ -142,19 +184,20 @@ class AppState(context: Context) {
         if (!picked.add(id)) picked.remove(id)
     }
 
-    fun pickAll() {
-        pending().filterNot { sentToday(it.conversationId) }.forEach { picked.add(it.conversationId) }
-    }
-
-    /** 当前筛选分组（shown）内会话是否已全部勾选 —— 「全选/取消全选」按钮文案依据。 */
+    /**
+     * 当前列表（[listRows]）内会话是否已全部勾选 —— 「全选/取消全选」按钮文案依据。
+     *
+     * 注意口径必须是 [listRows] 而不是 [shown]：第二行分段（自动发送 / 不发送）生效时，
+     * 屏幕上看到的是名单，全选也该选名单，否则按钮提示的数量和实际选中的不是同一批人。
+     */
     fun groupAllPicked(): Boolean {
-        val sel = shown()
+        val sel = listRows()
         return sel.isNotEmpty() && sel.all { it.conversationId in picked }
     }
 
     /** 全选/取消全选当前分组全部会话（含无火花），数量与分组标题一致。 */
     fun togglePickGroup() {
-        val sel = shown()
+        val sel = listRows()
         if (sel.isEmpty()) return
         if (sel.all { it.conversationId in picked }) {
             sel.forEach { picked.remove(it.conversationId) }
@@ -178,4 +221,108 @@ class AppState(context: Context) {
     fun clearPick() {
         picked.clear()
     }
+
+    // ── 发送名单（三种归属） ──────────────────────────────────────
+
+    /** 某个会话在「自动发送名单」里的归属。 */
+    fun membershipOf(id: String): Membership = when {
+        id in config.forcedRenew -> Membership.RENEW
+        id in config.forcedSkip -> Membership.SKIP
+        else -> Membership.AUTO
+    }
+
+    /** 改归属：三态互斥写入，[Membership.AUTO] 两组名单都清掉。 */
+    fun setMembership(id: String, mode: Membership) {
+        update { c ->
+            val renew = if (mode == Membership.RENEW) c.forcedRenew + id else c.forcedRenew - id
+            val skip = if (mode == Membership.SKIP) c.forcedSkip + id else c.forcedSkip - id
+            c.copy(forcedRenew = renew, forcedSkip = skip)
+        }
+    }
+
+    /**
+     * 会不会进「自动发送名单」。
+     *
+     * 口径与主页、与 [SparkConfig.needsRenewal] 分层：这里回答的是「只要今天还没发、会不会自动续」，
+     * 所以**有火花就算进**（已燃只是今天续过了，明天照样续）；固定不发永远不进，固定发送没火花也进。
+     */
+    fun inAutoList(snapshot: ConversationSnapshot): Boolean =
+        when (membershipOf(snapshot.conversationId)) {
+            Membership.SKIP -> false
+            Membership.RENEW -> true
+            Membership.AUTO -> snapshot.hasSpark
+        }
+
+    fun autoRows(): List<ConversationSnapshot> = visible().filter { inAutoList(it) }
+
+    fun noSendRows(): List<ConversationSnapshot> = visible().filter { !inAutoList(it) }
+
+    /** 名单人数（hero 的「自动」与大分母）。 */
+    fun autoCount(): Int = autoRows().size
+
+    fun noSendCount(): Int = noSendRows().size
+
+    /** 手动固定发送的人数（hero 小字「固定发送 N」）。 */
+    fun fixedSendCount(): Int = autoRows().count { membershipOf(it.conversationId) == Membership.RENEW }
+
+    /** 这个会话有没有文案（没写脚本、也没挂宏 = 没有）。 */
+    fun hasScript(id: String): Boolean = noBodyCount(listOf(id)) == 0
+
+    /**
+     * 第二行分段生效时列表里的人。
+     *
+     * 排序：没有文案的排最前（先让你看见谁会掉队）→ 手动指定过的其次 → 其余按火花天数从多到少。
+     */
+    fun memberRows(): List<ConversationSnapshot> {
+        val base = if (mstat == 0) autoRows() else noSendRows()
+        val key = query.trim()
+        val filtered =
+            if (key.isEmpty()) base
+            else base.filter {
+                it.displayName.contains(key, ignoreCase = true) ||
+                    it.conversationId.contains(key, ignoreCase = true)
+            }
+        // 权重只算一次：在比较器里反复调 hasScript 会反复走 macrosFor，几百个会话就看得见卡。
+        val weight = HashMap<String, Int>(filtered.size * 2)
+        filtered.forEach { snapshot ->
+            val id = snapshot.conversationId
+            weight[id] = when {
+                !hasScript(id) -> 0
+                membershipOf(id) != Membership.AUTO -> 1
+                else -> 2
+            }
+        }
+        return filtered.sortedWith(compareBy({ weight[it.conversationId] ?: 2 }, { -it.days }))
+    }
+
+    /** 当前该渲染的列表：第二行分段优先，否则走五档 + 搜索词。 */
+    fun listRows(): List<ConversationSnapshot> = if (mstat >= 0) memberRows() else shown()
+
+    /**
+     * 名单里指向「已经不在会话列表里的人」：删好友、换设备、会话 id 变了之后留下的残留。
+     *
+     * 不自动清 —— 清掉就等于用户设过的「固定发送」无声消失。这些 id 在名单底部以
+     * 「已失联」灰行显示，用户自己点「恢复默认」才真正删掉。
+     */
+    fun ghostRows(): List<Pair<String, Membership>> {
+        val alive = config.snapshots.map { it.conversationId }.toSet()
+        val out = mutableListOf<Pair<String, Membership>>()
+        config.forcedRenew.filter { it !in alive }.forEach { out += it to Membership.RENEW }
+        config.forcedSkip.filter { it !in alive }.forEach { out += it to Membership.SKIP }
+        return out
+    }
+
+    /** 当前名单档位下该显示的失联条目。 */
+    fun ghostsFor(mstat: Int): List<Pair<String, Membership>> = when (mstat) {
+        0 -> ghostRows().filter { it.second == Membership.RENEW }
+        1 -> ghostRows().filter { it.second == Membership.SKIP }
+        else -> emptyList()
+    }
+}
+
+/** 会话在自动发送名单里的归属：默认（跟抖音判定）/ 固定发送 / 固定不发。 */
+enum class Membership(val label: String) {
+    AUTO("默认"),
+    RENEW("固定发送"),
+    SKIP("固定不发"),
 }

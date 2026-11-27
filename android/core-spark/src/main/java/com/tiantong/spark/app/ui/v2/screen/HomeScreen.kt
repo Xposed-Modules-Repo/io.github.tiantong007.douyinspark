@@ -19,33 +19,36 @@ import com.tiantong.spark.app.config.model.ConversationSnapshot
 import com.tiantong.spark.app.ui.common.AvatarLoader
 import com.tiantong.spark.app.ui.v2.comp.MATCH
 import com.tiantong.spark.app.ui.v2.comp.WRAP
-import com.tiantong.spark.app.ui.v2.comp.chips
+import com.tiantong.spark.app.ui.v2.comp.card
 import com.tiantong.spark.app.ui.v2.comp.column
 import com.tiantong.spark.app.ui.v2.comp.divider
 import com.tiantong.spark.app.ui.v2.comp.dp
 import com.tiantong.spark.app.ui.v2.comp.dpF
 import com.tiantong.spark.app.ui.v2.comp.emptyState
-import com.tiantong.spark.app.ui.v2.comp.gap
 import com.tiantong.spark.app.ui.v2.comp.gradient
 import com.tiantong.spark.app.ui.v2.comp.icon
 import com.tiantong.spark.app.ui.v2.comp.lp
-import com.tiantong.spark.app.ui.v2.comp.rounded
 import com.tiantong.spark.app.ui.v2.comp.row
 import com.tiantong.spark.app.ui.v2.comp.shape
 import com.tiantong.spark.app.ui.v2.comp.switchChip
 import com.tiantong.spark.app.ui.v2.comp.text
 import com.tiantong.spark.app.ui.v2.nav.PageView
 import com.tiantong.spark.app.ui.v2.nav.Shell
+import com.tiantong.spark.app.ui.v2.state.Membership
 import com.tiantong.spark.app.ui.v2.theme.Tokens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * 首页：今天还有谁没续、谁续过了，拨一下开关就进待发队列。
+ * 状态看板：今天还有谁没续、谁续过了，以及「自动发送名单」里都有谁。
  *
- * 层级：深色进度卡（一眼看到进度和下一轮时间）→ 三档分段（全部/待发/已续）
- * → 名单（头像 / 名字 / 状态 / 天数 / 开关）→ 底部说明卡。
+ * 层级：深色进度卡（自动人数 / 已续 / 已燃 + 名单构成 + 下一轮）→ 第 1 行五档分段（火花状态）
+ * → 第 2 行两档分段（自动发送 / 不发送，与第 1 行互斥）→ 名单（两行结构：名字 + 火花天数，
+ * 三态徽章 + 状态徽章 + 说明）→ 底部说明卡。
+ *
+ * 行尾的控件按列表来源分工：五档看板里是勾选开关（手动发谁），
+ * 名单两档里是规则按钮（固定发送 / 固定不发 / 恢复默认），互不重叠。
  */
 class HomeScreen(private val shell: Shell) : PageView {
 
@@ -65,19 +68,24 @@ class HomeScreen(private val shell: Shell) : PageView {
     private fun fill(root: LinearLayout) {
         root.removeAllViews()
         root.addView(hero())
-        root.addView(segments())
+        root.addView(segmentRow1())
+        root.addView(segmentRow2())
         root.addView(listOfConversations())
+        root.addView(explainCard())
     }
 
     // ── 深色进度卡 ────────────────────────────────────────────────
 
     private fun hero(): View {
         val state = shell.state
-        val done = state.doneCount()
-        val lit = state.litCount()
-        val tpl = state.templateCount().coerceAtLeast(0)
-        val todo = state.todoCount()
-        val templates = state.config.groups.size
+        val autoRows = state.autoRows()
+        val autoN = autoRows.size
+        val fixedIn = state.fixedSendCount()
+        val noN = state.noSendCount()
+        // 名单为空时退回全部会话，避免 hero 三个数字全为 0。
+        val statRows = if (autoN > 0) autoRows else state.visible()
+        val done = statRows.count { state.sentToday(it.conversationId) }
+        val lit = statRows.count { it.state == 1 }
 
         val frame = FrameLayout(ctx).apply {
             background = ctx.gradient(Tokens.HERO_START, Tokens.HERO_END, Tokens.R_XL)
@@ -118,45 +126,63 @@ class HomeScreen(private val shell: Shell) : PageView {
             },
         )
 
-        // 两个比值：今天已续 / 已燃，分母都取「联动模板的会话数」，跟手机上的口径一致。
+        // 三列等宽、左中右贴边：自动发送（左）/ 已续（中）/ 已燃（右）。
+        // 三处数字同字号（26sp），只报绝对数不摆分母 —— 分母一出现（16？22？）
+        // 就要解释口径，而口径本身是另一件事（名单构成已经在小字行里说了）。
         body.addView(
             ctx.row().apply {
-                gravity = Gravity.BOTTOM
-                addView(ratio("$done", "$tpl 已续"), ctx.lp(WRAP, WRAP))
-                addView(View(ctx), ctx.lp(0, 1, 1f))          // 撑开中间，把第二个顶到右边
-                addView(ratio("$lit", "$tpl 已燃"), ctx.lp(WRAP, WRAP))
+                addView(heroStat("$autoN", "自动发送", Gravity.START), ctx.lp(0, WRAP, 1f))
+                addView(heroStat("$done", "已续", Gravity.CENTER_HORIZONTAL), ctx.lp(0, WRAP, 1f))
+                addView(heroStat("$lit", "已燃", Gravity.END), ctx.lp(0, WRAP, 1f))
             },
-            ctx.lp(MATCH, WRAP, top = 0),
+            ctx.lp(MATCH, WRAP, top = 10),
         )
 
-        // 三个胶囊：待续(0 个时显示「今天都续完了」，与原型口径一致) / 下一轮 / 模板
-        // 行距统一由行容器 top=6 控制，子项不再各自带 top，调间距只动这一个数
-        val pills = ctx.row().apply {
-            addView(pill(if (todo == 0) "今天都续完了" else "$todo 个待续", fire = true), ctx.lp(WRAP, WRAP, right = 8))
-            addView(pill("下一轮 ${nextRound()}"), ctx.lp(WRAP, WRAP, right = 8))
-            addView(pill("模板 $templates 个"), ctx.lp(WRAP, WRAP))
-        }
-        body.addView(pills, ctx.lp(MATCH, WRAP, top = 6))
+        // 小字统计行：名单构成。
+        body.addView(
+            ctx.row().apply {
+                gravity = Gravity.CENTER_VERTICAL
+                addView(stat("固定发送", fixedIn), ctx.lp(WRAP, WRAP, right = 14))
+                addView(stat("有火花", autoN - fixedIn), ctx.lp(WRAP, WRAP, right = 14))
+                addView(stat("不会续", noN), ctx.lp(WRAP, WRAP))
+            },
+            ctx.lp(MATCH, WRAP, top = 8),
+        )
+
+        // 开关状态 + 下一轮：原来三个胶囊里最重要的两条，收成一行小字。
+        val hint = (if (state.config.enabled) "自动续火花已开启" else "自动续火花已关闭") +
+            " · 下一轮 ${nextRound()}"
+        body.addView(ctx.text(hint, 11.5f, 0x80FFFFFF.toInt()), ctx.lp(MATCH, WRAP, top = 4))
         return frame
     }
 
-    /** 胶囊标签：待续数 / 下一轮时间 / 模板数。 */
-    private fun pill(label: String, fire: Boolean = false): View =
-        ctx.text(label, 12f, if (fire) Tokens.PILL_FIRE_FG else Tokens.ON_HERO_DIM).apply {
-            background = ctx.shape(if (fire) Tokens.PILL_FIRE_BG else Tokens.PILL_BG, 9)
-            // 上下留 8dp：6dp 时中文的顶横会顶到胶囊边沿，被裁掉一截
-            setPadding(ctx.dp(11), ctx.dp(8), ctx.dp(11), ctx.dp(8))
-            minimumHeight = ctx.dp(28)
-            gravity = Gravity.CENTER
-            maxLines = 1
+    /**
+     * hero 的一格：26sp 数字 + 右下角小字标签，整格按 [gravity] 贴左 / 居中 / 贴右。
+     *
+     * 三格权重都是 1f，左中右各占三分之一，所以三个数字永远贴在卡片两端与正中。
+     */
+    private fun heroStat(value: String, suffix: String, gravity: Int = Gravity.CENTER_HORIZONTAL): View =
+        ctx.column().apply {
+            this.gravity = gravity
+            addView(
+                ctx.row().apply {
+                    this.gravity = Gravity.BOTTOM
+                    addView(ctx.text(value, 26f, Tokens.ON_HERO, bold = true))
+                    addView(
+                        ctx.text(suffix, 11.5f, Tokens.ON_HERO_FAINT, bold = true),
+                        ctx.lp(WRAP, WRAP, left = 3, bottom = 3),
+                    )
+                },
+                ctx.lp(WRAP, WRAP),
+            )
         }
 
-    /** 大数字 + 后缀，例如 `16 / 18 已续`。 */
-    private fun ratio(big: String, suffix: String): View =
+    /** 小字统计项：灰色标签 + 白色数字。 */
+    private fun stat(label: String, value: Int): View =
         ctx.row().apply {
-            gravity = Gravity.BOTTOM
-            addView(ctx.text(big, 30f, Tokens.ON_HERO, bold = true))
-            addView(ctx.text(" / $suffix", 14f, Tokens.ON_HERO_FAINT, bold = true), ctx.lp(WRAP, WRAP, left = 3, bottom = 2))
+            gravity = Gravity.CENTER_VERTICAL
+            addView(ctx.text(label, 11.5f, Tokens.ON_HERO_FAINT))
+            addView(ctx.text(" $value", 11.5f, Tokens.ON_HERO, bold = true), ctx.lp(WRAP, WRAP, left = 2))
         }
 
     private fun recordTime(): String =
@@ -168,9 +194,10 @@ class HomeScreen(private val shell: Shell) : PageView {
         return if (hour < 0) "未设" else String.format(Locale.US, "%02d:%02d", hour, shell.state.config.alarmMinute)
     }
 
-    // ── 五档分段 ──────────────────────────────────────────────────
+    // ── 两行分段 ──────────────────────────────────────────────────
 
-    private fun segments(): View {
+    /** 第一行：火花状态五档。点它等于「退出名单视图」。 */
+    private fun segmentRow1(): View {
         val state = shell.state
         val labels = listOf(
             "全部 ${state.visible().size}",
@@ -179,69 +206,186 @@ class HomeScreen(private val shell: Shell) : PageView {
             "待续 ${state.todoCount()}",
             "无火花 ${state.deadCount()}",
         )
-        return ctx.chips(labels, state.filter) { index ->
+        val selected = if (state.mstat >= 0) -1 else state.filter
+        return seg(labels, selected, top = 16, bottom = 5) { index ->
             state.filter = index
+            state.mstat = -1
             shell.rebuild()
         }
     }
+
+    /** 第二行：发送名单两档。再点一次同一档退回五档。 */
+    private fun segmentRow2(): View {
+        val state = shell.state
+        val labels = listOf("自动发送 ${state.autoCount()}", "不发送 ${state.noSendCount()}")
+        return seg(labels, state.mstat, top = 0, bottom = 12) { index ->
+            state.mstat = if (state.mstat == index) -1 else index
+            shell.rebuild()
+        }
+    }
+
+    /**
+     * 分段控制器：一排等宽胶囊，选中的浮起成白底。
+     *
+     * [selected] 传 -1 表示这一行当前不生效（另一行在生效）——两行互斥就靠这个。
+     */
+    private fun seg(
+        labels: List<String>,
+        selected: Int,
+        top: Int,
+        bottom: Int,
+        onPick: (Int) -> Unit,
+    ): LinearLayout =
+        ctx.row().apply {
+            layoutParams = ctx.lp(MATCH, WRAP, top = top, bottom = bottom)
+            setPadding(ctx.dp(3), ctx.dp(3), ctx.dp(3), ctx.dp(3))
+            background = ctx.shape(Tokens.SEG_BG, Tokens.R_MD)
+            labels.forEachIndexed { index, label ->
+                val on = index == selected
+                addView(
+                    ctx.text(label, 13f, if (on) Tokens.INK else Tokens.INK_DIM, bold = on).apply {
+                        gravity = Gravity.CENTER
+                        setPadding(0, ctx.dp(7), 0, ctx.dp(7))
+                        if (on) {
+                            background = ctx.shape(Tokens.SURFACE, 9)
+                            elevation = ctx.dpF(1.5f)
+                        }
+                        isClickable = true
+                        setOnClickListener { onPick(index) }
+                    },
+                    ctx.lp(0, WRAP, 1f),
+                )
+            }
+        }
 
     // ── 名单 ──────────────────────────────────────────────────────
 
     private fun listOfConversations(): View {
         val state = shell.state
-        val items = state.shown()
+        val member = state.mstat >= 0
+        val items = state.listRows()
         val box = ctx.column().apply { background = ctx.shape(Tokens.SURFACE, 18) }
 
-        if (items.isEmpty()) {
+        val ghosts = state.ghostsFor(state.mstat)
+        if (items.isEmpty() && ghosts.isEmpty()) {
             box.addView(emptyStateFor())
             return box
         }
 
         items.forEachIndexed { index, snapshot ->
-            box.addView(rowOf(snapshot))
+            box.addView(rowOf(snapshot, member))
             if (index != items.lastIndex) box.addView(ctx.divider())
         }
+        // 失联条目：名单里指向已不存在的会话。不静默丢，灰行摆出来让用户自己清。
+        if (ghosts.isNotEmpty()) {
+            if (items.isNotEmpty()) box.addView(ctx.divider())
+            ghosts.forEachIndexed { index, (id, mode) ->
+                box.addView(ghostRow(id, mode))
+                if (index != ghosts.lastIndex) box.addView(ctx.divider())
+            }
+        }
         return box
+    }
+
+    /** 失联名单行：id 已不在会话列表里，只留着用户设过的归属。 */
+    private fun ghostRow(id: String, mode: Membership): View {
+        val state = shell.state
+        return ctx.row().apply {
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(ctx.dp(15), ctx.dp(12), ctx.dp(15), ctx.dp(12))
+            minimumHeight = ctx.dp(66)
+            addView(
+                TextView(ctx).apply {
+                    text = "?"
+                    gravity = Gravity.CENTER
+                    setTextColor(Tokens.INK_FAINT)
+                    textSize = 15f
+                    background = ctx.shape(0xFFF1F2F5.toInt(), 21)
+                },
+                ctx.lp(42, 42, right = 12),
+            )
+            val who = ctx.column()
+            who.addView(
+                ctx.text("已失联的会话", 14.5f, Tokens.INK_DIM, bold = true).apply { maxLines = 1 },
+                ctx.lp(MATCH, WRAP),
+            )
+            val sub = ctx.row().apply { gravity = Gravity.CENTER_VERTICAL }
+            sub.addView(
+                tag(
+                    mode.label,
+                    if (mode == Membership.RENEW) Tokens.OK else 0xFF33363B.toInt(),
+                    if (mode == Membership.RENEW) 0x1712B886 else 0x0B000000,
+                ),
+                ctx.lp(WRAP, WRAP, right = 5),
+            )
+            sub.addView(tag("已失联", Tokens.MUTED, Tokens.MUTED_SOFT), ctx.lp(WRAP, WRAP, right = 5))
+            sub.addView(
+                ctx.text("· 尾号 " + id.takeLast(6), 12f, Tokens.INK_DIM).apply { maxLines = 1 },
+                ctx.lp(0, WRAP, 1f, left = 0),
+            )
+            who.addView(sub, ctx.lp(MATCH, WRAP, top = 4))
+            addView(who, ctx.lp(0, WRAP, 1f))
+            addView(
+                ruleButton("恢复默认", Tokens.OK, 0x0F12B886) {
+                    state.setMembership(id, Membership.AUTO)
+                    state.touchedId = null
+                    shell.rebuild()
+                },
+                ctx.lp(WRAP, WRAP),
+            )
+        }
     }
 
     private fun emptyStateFor(): View {
         val state = shell.state
         return when {
+            state.mstat == 0 && state.autoCount() == 0 ->
+                ctx.emptyState(Tokens.Icon.CHECK, "自动发送名单是空的", "所有会话都被固定不发了吗")
+
+            state.mstat == 1 && state.noSendCount() == 0 ->
+                ctx.emptyState(Tokens.Icon.CHECK, "不发送名单是空的", "所有人都还会自动续火花")
+
             state.visible().isEmpty() ->
                 ctx.emptyState(Tokens.Icon.INFO, "还没有会话数据", "进一次抖音，回来点右上角刷新")
 
             state.filter == 3 && state.todoCount() == 0 ->
                 ctx.emptyState(Tokens.Icon.CHECK, "今天都续完了", "该续的 ${state.renewable().size} 个都已经发过，明天再来")
 
-            else -> ctx.emptyState(Tokens.Icon.SEARCH, "这一档没有人", "换一个分类，或清掉搜索词")
+            state.filter == 4 ->
+                ctx.emptyState(Tokens.Icon.FIRE, "没有无火花的会话", "所有会话的火花都还在")
+
+            else -> ctx.emptyState(Tokens.Icon.SEARCH, "这一档没有人", "换一个查看条件试试")
         }
     }
 
-    private fun rowOf(snapshot: ConversationSnapshot): View {
+    /**
+     * 一行会话。两行结构：
+     * ① 名字 + 火花天数；② 三态徽章 + 状态徽章 + 无文案 + 说明。
+     * 行尾：[member] 为真挂名单规则按钮，否则挂勾选开关。
+     */
+    private fun rowOf(snapshot: ConversationSnapshot, member: Boolean): View {
         val state = shell.state
-        val sent = state.sentToday(snapshot.conversationId)
-        val picked = state.isPicked(snapshot.conversationId)
+        val id = snapshot.conversationId
 
         return ctx.row().apply {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(ctx.dp(15), ctx.dp(12), ctx.dp(15), ctx.dp(12))
+            minimumHeight = ctx.dp(66)
+            // 刚改过归属的那一行浅浅标一下：整页重建后一眼能找到人跑到哪去了。
+            if (state.touchedId == id) background = ctx.shape(0x0F12B886, 18)
             isClickable = true
-            setOnClickListener { shell.openEditor(conversationId = snapshot.conversationId) }
+            setOnClickListener { shell.openEditor(conversationId = id) }
 
             addView(
                 ImageView(ctx).apply {
-                    AvatarLoader.load(
-                        ctx,
-                        this,
-                        snapshot.peerUid.ifBlank { snapshot.conversationId },
-                        snapshot.displayName,
-                        42,
-                    )
+                    AvatarLoader.load(ctx, this, snapshot.peerUid.ifBlank { id }, snapshot.displayName, 42)
                 },
                 ctx.lp(42, 42, right = 12),
             )
 
             val who = ctx.column()
+
+            // ① 名字 + 火花天数（天数和名字同字号，火苗 12）
             val nameRow = ctx.row().apply { gravity = Gravity.CENTER_VERTICAL }
             nameRow.addView(
                 ctx.text(snapshot.displayName, 14.5f, Tokens.INK, bold = true).apply {
@@ -250,40 +394,102 @@ class HomeScreen(private val shell: Shell) : PageView {
                 },
                 ctx.lp(WRAP, WRAP, right = 6),
             )
-            if (snapshot.isGroup) nameRow.addView(tag("群", Tokens.INFO, Tokens.INFO_SOFT))
-            nameRow.addView(statusTag(snapshot))
+            nameRow.addView(ctx.icon(Tokens.Icon.FIRE, 12f, Tokens.ACCENT), ctx.lp(WRAP, WRAP, right = 3))
+            nameRow.addView(ctx.text("${snapshot.days}", 14.5f, Tokens.INK, bold = true))
+            nameRow.addView(ctx.text("天", 14.5f, Tokens.INK, bold = true))
+            if (snapshot.isGroup) nameRow.addView(tag("群", Tokens.INFO, Tokens.INFO_SOFT), ctx.lp(WRAP, WRAP, left = 6))
             who.addView(nameRow, ctx.lp(MATCH, WRAP))
 
+            // ② 三态徽章 + 状态徽章 + 无文案 + 说明（没文案时不写说明，省略解释移到底部说明卡）
+            val subRow = ctx.row().apply { gravity = Gravity.CENTER_VERTICAL }
+            subRow.addView(memberTag(snapshot), ctx.lp(WRAP, WRAP, right = 5))
+            subRow.addView(statusTag(snapshot), ctx.lp(WRAP, WRAP))
+            if (!state.hasScript(id)) {
+                subRow.addView(tag("无文案", Tokens.DANGER, 0x1AE5484D), ctx.lp(WRAP, WRAP, left = 5))
+            }
             val sub = subtitle(snapshot)
             if (sub.isNotBlank()) {
-                who.addView(
-                    ctx.text(sub, 12f, Tokens.INK_DIM).apply {
+                subRow.addView(
+                    ctx.text("· $sub", 12f, Tokens.INK_DIM).apply {
                         maxLines = 1
                         ellipsize = android.text.TextUtils.TruncateAt.END
                     },
-                    ctx.lp(MATCH, WRAP, top = 1),
+                    ctx.lp(0, WRAP, 1f, left = 5),
                 )
             }
+            who.addView(subRow, ctx.lp(MATCH, WRAP, top = 4))
             addView(who, ctx.lp(0, WRAP, 1f))
 
+            // 名单档位也要能勾：全选/发送作用的是当前列表，看不见勾选就无从取消。
             addView(
-                ctx.row().apply {
-                    gravity = Gravity.CENTER_VERTICAL
-                    addView(ctx.text("${snapshot.days}", 15f, Tokens.INK, bold = true), ctx.lp(WRAP, WRAP))
-                    addView(ctx.text("天", 10.5f, Tokens.INK_DIM), ctx.lp(WRAP, WRAP, left = 1, bottom = 1))
-                },
-                ctx.lp(WRAP, WRAP, right = 12),
-            )
-
-            addView(
-                ctx.switchChip(picked) { on ->
-                    if (state.isPicked(snapshot.conversationId) != on) state.togglePick(snapshot.conversationId)
+                ctx.switchChip(state.isPicked(id)) { on ->
+                    if (state.isPicked(id) != on) state.togglePick(id)
                     shell.rebuild()
                 },
                 ctx.lp(44, 26),
             )
+            if (member) addView(rules(snapshot), ctx.lp(WRAP, WRAP, left = 6))
         }
     }
+
+    /** 名单行尾的规则按钮：恢复默认 / 固定发送 / 固定不发。竖排，最多两个。 */
+    private fun rules(snapshot: ConversationSnapshot): View {
+        val state = shell.state
+        val id = snapshot.conversationId
+        val mode = state.membershipOf(id)
+        val box = ctx.column()
+
+        if (mode != Membership.AUTO) {
+            box.addView(
+                ruleButton("恢复默认", Tokens.OK, 0x0F12B886) {
+                    state.setMembership(id, Membership.AUTO)
+                    state.touchedId = id
+                    shell.rebuild()
+                },
+                ctx.lp(MATCH, WRAP, bottom = 4),
+            )
+        }
+        if (state.inAutoList(snapshot)) {
+            box.addView(
+                ruleButton("固定不发", 0xFF33363B.toInt(), 0x0B000000) {
+                    state.setMembership(id, Membership.SKIP)
+                    state.touchedId = id
+                    shell.rebuild()
+                },
+                ctx.lp(MATCH, WRAP),
+            )
+        } else {
+            box.addView(
+                ruleButton("固定发送", Tokens.ACCENT, 0x0EFE2C55) {
+                    state.setMembership(id, Membership.RENEW)
+                    state.touchedId = id
+                    shell.rebuild()
+                },
+                ctx.lp(MATCH, WRAP),
+            )
+        }
+        return box
+    }
+
+    /** 规则按钮：浅底 + 同色文字 + 同色描边，跟徽章一套配色。 */
+    private fun ruleButton(label: String, color: Int, tint: Int, onClick: () -> Unit): TextView =
+        ctx.text(label, 11f, color, bold = true).apply {
+            gravity = Gravity.CENTER
+            setPadding(ctx.dp(9), ctx.dp(4), ctx.dp(9), ctx.dp(4))
+            background = ctx.shape(tint, 8).apply {
+                setStroke(ctx.dp(1), (color and 0x00FFFFFF) or 0x42000000)
+            }
+            isClickable = true
+            setOnClickListener { onClick() }
+        }
+
+    /** 三态徽章：默认 / 固定发送 / 固定不发。 */
+    private fun memberTag(snapshot: ConversationSnapshot): TextView =
+        when (shell.state.membershipOf(snapshot.conversationId)) {
+            Membership.RENEW -> tag("固定发送", Tokens.OK, 0x1712B886)
+            Membership.SKIP -> tag("固定不发", 0xFF33363B.toInt(), 0x12000000)
+            Membership.AUTO -> tag("默认", Tokens.INK_FAINT, 0x0B000000)
+        }
 
     /**
      * 行内状态标签，和首页五档一一对应：
@@ -308,16 +514,35 @@ class HomeScreen(private val shell: Shell) : PageView {
             background = ctx.shape(tint, 6)
         }
 
+    /** 第二行说明：只放状态类信息（火花异常 / 到期 / 需几天），天数不在这里重复。 */
     private fun subtitle(snapshot: ConversationSnapshot): String {
-        val config = shell.state.config
+        if (!shell.state.hasScript(snapshot.conversationId)) return ""
         val parts = mutableListOf<String>()
-        if (config.conversation(snapshot.conversationId)?.body.isNullOrBlank()) parts += "未设置脚本"
-        if (snapshot.days > 0) parts += "火花 ${snapshot.days} 天"
         val flame = snapshot.stateText.ifBlank { snapshot.flameText }
         if (flame.isNotBlank() && flame != snapshot.days.toString()) parts += flame
         if (snapshot.expireText.isNotBlank()) parts += snapshot.expireText
         if (parts.isEmpty() && snapshot.recoverNeedDays > 0) parts += "需 ${snapshot.recoverNeedDays} 天"
-        return parts.joinToString(" · ").ifBlank { "还没开始" }
+        return parts.joinToString(" · ")
+    }
+
+    /** 底部说明卡：名单四种归属各一句 + 一句「跟今天发没发过无关」。始终渲染。 */
+    private fun explainCard(): View {
+        val box = ctx.card()
+        box.addView(ctx.text("说明", Tokens.T_SECTION, Tokens.INK_DIM, bold = true))
+        val lines = listOf(
+            "无文案：没写脚本、也没挂宏的会话（模板正文不参与判定），自动发送会跳过，主页手动勾选发送同样跳过。",
+            "默认：只要还有火花（已燃 / 待燃 / 重燃中）就在名单里，每天自动续一次 —— 已燃只是今天续过了，明天照样续。",
+            "固定发送：没火花也每天发 —— 想从头点亮没火花的人、或者已燃的大火花想额外兜底，都用这个。",
+            "固定不发：永远不自动续，即使有火花、明天掉到待燃也不发；点「恢复默认」放回默认。",
+            "这张自动发送名单跟「今天发没发过」完全无关，也不影响主页手动勾选发送。",
+        )
+        lines.forEach { line ->
+            box.addView(
+                ctx.text(line, 12f, Tokens.INK_DIM).apply { setLineSpacing(ctx.dpF(3f), 1f) },
+                ctx.lp(MATCH, WRAP, top = 6),
+            )
+        }
+        return box
     }
 }
 
